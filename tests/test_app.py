@@ -1,3 +1,4 @@
+import os
 import re
 
 import pytest
@@ -101,7 +102,7 @@ def test_generate_manual(client):
     assert r.status_code == 200
     d = r.get_json()
     assert "Copy everything below" in d["body"]
-    assert d["out_path"].endswith("recaps/999/2026_week_2_prompt.md")
+    assert d["out_path"].endswith(os.path.join("recaps", "999", "2026_week_2_prompt.md"))
     assert "recipients" not in d
     assert not re.search(r"[\w.]+@[\w.]+", d["body"])
 
