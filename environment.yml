@@ -6,6 +6,7 @@ dependencies:
   - pip
   - pip:
       - requests
+      - flask
       - pytest
       # Install only the SDK for your chosen LLM provider:
       # - anthropic
