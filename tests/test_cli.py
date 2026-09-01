@@ -157,3 +157,13 @@ def test_recap_includes_enrichment_when_gather_succeeds(tmp_path, monkeypatch):
     out = tmp_path / "p.md"
     cli.main(["recap", "--config", str(cfg), "--week", "2", "--provider", "manual", "--out", str(out)])
     assert "Matchup details:" in out.read_text()
+
+
+def test_run_recap_returns_body_and_path(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    monkeypatch.chdir(tmp_path)
+    cfg = {"league_id": "999", "tone": "dry", "teams": {}}
+    body, out = cli.run_recap(cfg, week=2, provider="manual")
+    assert "Copy everything below" in body
+    assert out == "recaps/week_2_prompt.md"
+    assert (tmp_path / out).read_text(encoding="utf-8") == body
