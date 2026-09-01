@@ -31,7 +31,7 @@ def _draft_slots(picks):
 
 def _pickups(sp, league_id, week):
     pickups = []
-    for wk in (week - 1, week):
+    for wk in range(max(1, week - 1), week + 1):
         for t in sp.transactions(league_id, wk):
             if t.get("type") == "trade":
                 continue

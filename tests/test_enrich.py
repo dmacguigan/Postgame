@@ -65,3 +65,21 @@ def test_gather_uses_injected_fake_sleeper_mod_no_network():
     assert set(extra["prev_matchups"].keys()) == {1, 2, 3}
     assert extra["team_streaks"][1][-1] == (3, 120.0, "L")
     assert extra["hot_cold"] == {"p3": "cold", "p4": "hot"}
+
+
+def test_pickups_week_one_never_requests_week_zero():
+    requested_weeks = []
+
+    def fake_transactions(league_id, week):
+        requested_weeks.append(week)
+        return []
+
+    fake = types.SimpleNamespace(
+        players=lambda: PLAYERS,
+        season_stats=lambda season: STATS,
+        draft_picks=lambda league_id: DRAFT_PICKS,
+        transactions=fake_transactions,
+        matchups=lambda league_id, week: [],
+    )
+    enrich.gather("999", "2026", 1, MATCHUPS, ROSTERS, sleeper_mod=fake)
+    assert requested_weeks == [1]
