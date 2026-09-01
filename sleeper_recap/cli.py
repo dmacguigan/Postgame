@@ -23,7 +23,7 @@ def cmd_init(args):
         usernames[u["user_id"]] = u["display_name"]
     lines = [
         f"league_id = {_toml_str(args.league_id)}",
-        'provider = "anthropic"  # anthropic | openai | gemini | manual',
+        'provider = "manual"  # manual | anthropic | openai | gemini',
         f'model = {_toml_str(llm.DEFAULT_MODELS["anthropic"])}',
         'tone = "funny, light trash talk, inside jokes welcome"',
         "",
@@ -54,6 +54,17 @@ def cmd_recap(args):
     if not league_id:
         raise SystemExit("config missing league_id; re-run init")
 
+    if args.season and not args.week:
+        raise SystemExit("--season requires --week (past seasons have no current week)")
+    if args.season:
+        lg = sleeper.league(league_id)
+        while lg.get("season") != str(args.season):
+            prev = lg.get("previous_league_id")
+            if not prev:
+                raise SystemExit(f"no {args.season} season found in this league's history")
+            lg = sleeper.league(prev)
+        league_id = lg["league_id"]
+
     week = args.week or max(sleeper.nfl_state()["week"] - 1, 1)
     matchups = sleeper.matchups(league_id, week)
     if not matchups or all((m.get("points") or 0) == 0 for m in matchups):
@@ -67,7 +78,7 @@ def cmd_recap(args):
         week,
         config,
     )
-    provider = args.provider or config.get("provider", "anthropic")
+    provider = args.provider or config.get("provider", "manual")
     if provider == "manual":
         header = (
             "Copy everything below into your AI chat of choice "
@@ -106,6 +117,7 @@ def main(argv=None):
 
     p_recap = sub.add_parser("recap", help="draft the weekly recap email")
     p_recap.add_argument("--week", type=int)
+    p_recap.add_argument("--season", type=int)
     p_recap.add_argument("--provider", choices=["anthropic", "openai", "gemini", "manual"])
     p_recap.add_argument("--model")
     p_recap.add_argument("--config", default="config.toml")

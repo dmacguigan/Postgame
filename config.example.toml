@@ -1,5 +1,5 @@
 league_id = "1312070289483378688"
-provider = "anthropic"  # anthropic | openai | gemini | manual
+provider = "manual"  # manual | anthropic | openai | gemini
 model = "claude-opus-5"
 tone = "funny, light trash talk, inside jokes welcome"
 

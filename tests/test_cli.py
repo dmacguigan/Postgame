@@ -39,7 +39,7 @@ def test_recap_writes_output(tmp_path, monkeypatch, capsys):
     cfg = tmp_path / "config.toml"
     cli.main(["init", "--league-id", "999", "--config", str(cfg)])
     out = tmp_path / "email.md"
-    cli.main(["recap", "--config", str(cfg), "--week", "2", "--out", str(out)])
+    cli.main(["recap", "--config", str(cfg), "--week", "2", "--provider", "anthropic", "--out", str(out)])
     assert out.read_text() == "Subject: Wow\n\nBody here"
     captured = capsys.readouterr().out
     assert "Body here" in captured
@@ -97,3 +97,31 @@ def test_recap_manual_writes_prompt(tmp_path, monkeypatch):
     text = out.read_text()
     assert "Copy everything below" in text
     assert "Alice Attack" in text
+
+
+def test_recap_season_walks_chain(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    leagues = {
+        "999": {"name": "Test League", "season": "2026", "league_id": "999", "previous_league_id": "888"},
+        "888": {"name": "Test League", "season": "2025", "league_id": "888", "previous_league_id": None},
+    }
+    monkeypatch.setattr(sleeper, "league", lambda lid: leagues[lid])
+    seen = {}
+
+    def fake_matchups(lid, week):
+        seen["lid"] = lid
+        return MATCHUPS
+
+    monkeypatch.setattr(sleeper, "matchups", fake_matchups)
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    cli.main(["recap", "--config", str(cfg), "--season", "2025", "--week", "3", "--out", str(tmp_path / "p.md")])
+    assert seen["lid"] == "888"
+
+
+def test_season_requires_week(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    with pytest.raises(SystemExit, match="--week"):
+        cli.main(["recap", "--config", str(cfg), "--season", "2025"])
