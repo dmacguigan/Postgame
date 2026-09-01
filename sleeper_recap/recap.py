@@ -9,11 +9,13 @@ def _team_info(users, rosters, config):
         rid = r["roster_id"]
         cfg = teams_cfg.get(str(rid), {})
         settings = r.get("settings", {})
+        wins = settings.get("wins", 0)
         info[rid] = {
             "name": cfg.get("team_name") or display.get(r.get("owner_id"), f"Roster {rid}"),
             "owner": cfg.get("owner_name", ""),
             "facts": cfg.get("fun_facts", ""),
-            "record": f"{settings.get('wins', 0)}-{settings.get('losses', 0)}",
+            "wins": wins,
+            "record": f"{wins}-{settings.get('losses', 0)}",
             "fpts": settings.get("fpts", 0),
         }
     return info
@@ -60,7 +62,7 @@ def build_prompt(league, users, rosters, matchups, week, config):
         "",
         "Season standings (record, total points):",
     ]
-    standings = sorted(info.values(), key=lambda t: (t["record"], t["fpts"]), reverse=True)
+    standings = sorted(info.values(), key=lambda t: (t["wins"], t["fpts"]), reverse=True)
     for t in standings:
         lines.append(f"- {t['name']}: {t['record']}, {t['fpts']} pts")
 
