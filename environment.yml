@@ -7,6 +7,7 @@ dependencies:
   - pip:
       - requests
       - flask
+      - espn-api
       - pytest
       # Install only the SDK for your chosen LLM provider:
       # - anthropic

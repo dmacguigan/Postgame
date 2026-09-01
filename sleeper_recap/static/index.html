@@ -30,10 +30,22 @@
     <label>Saved leagues</label>
     <select id="league_select"></select>
   </div>
-  <label>Add a league: Sleeper league ID (the long number in your league URL)</label>
+  <label>Add a league</label>
   <div class="row">
-    <input id="league_id" placeholder="1234567890123456789">
+    <select id="platform" style="flex:0 0 8rem">
+      <option value="sleeper">Sleeper</option>
+      <option value="espn">ESPN</option>
+    </select>
+    <input id="league_id" placeholder="League ID (the long number in your league URL)">
     <button id="load">Load league</button>
+  </div>
+  <div id="espn_fields" style="display:none">
+    <p class="muted">Public ESPN leagues need nothing else. Private leagues need two cookies from ESPN.com:
+      log in, open browser dev tools, Application, Cookies, then copy espn_s2 and SWID.</p>
+    <div class="row">
+      <div><label>espn_s2</label><input id="espn_s2"></div>
+      <div><label>SWID</label><input id="swid" placeholder="{...}"></div>
+    </div>
   </div>
 </section>
 
@@ -103,7 +115,7 @@ function renderTeams() {
 }
 
 async function loadSeasons() {
-  const seasons = await api("/api/seasons?league_id=" + cfg.league_id);
+  const seasons = await api("/api/seasons?league_key=" + cfg.key);
   $("season").innerHTML = seasons.map(s => `<option value="${s.season}">${s.season}</option>`).join("");
   $("week").innerHTML = Array.from({ length: 18 }, (_, i) => `<option value="${i + 1}">Week ${i + 1}</option>`).join("");
 }
@@ -114,17 +126,18 @@ async function refreshLeagues() {
   $("league_select").innerHTML = "";
   for (const l of leagues) {
     const opt = document.createElement("option");
-    opt.value = l.league_id;
-    opt.textContent = l.name;
+    opt.value = l.key;
+    opt.textContent = l.platform === "sleeper" ? l.name : `${l.name} (${l.platform.toUpperCase()})`;
     $("league_select").appendChild(opt);
   }
-  if (cfg) $("league_select").value = cfg.league_id;
+  if (cfg) $("league_select").value = cfg.key;
   return leagues;
 }
 
-async function openLeague(id) {
-  cfg = await api("/api/config?league_id=" + id);
-  $("league_select").value = id;
+async function openLeague(key) {
+  cfg = await api("/api/config?league_key=" + key);
+  cfg.key = key;
+  $("league_select").value = key;
   renderTeams();
   await loadSeasons();
 }
@@ -132,9 +145,11 @@ async function openLeague(id) {
 async function boot() {
   try {
     const leagues = await refreshLeagues();
-    if (leagues.length) await openLeague(leagues[0].league_id);
+    if (leagues.length) await openLeague(leagues[0].key);
   } catch (e) { showError(e.message); }
 }
+
+$("platform").onchange = () => { $("espn_fields").style.display = $("platform").value === "espn" ? "" : "none"; };
 
 $("league_select").onchange = async () => {
   showError("");
@@ -144,11 +159,16 @@ $("league_select").onchange = async () => {
 $("load").onclick = async () => {
   showError("");
   const id = $("league_id").value.trim();
-  const saved = [...$("league_select").options].some(o => o.value === id);
+  const platform = $("platform").value;
+  const key = platform === "sleeper" ? id : `${platform}_${id}`;
+  const saved = [...$("league_select").options].some(o => o.value === key);
   if (saved && !confirm("This league is already saved. Replace it? Owner names and fun facts will be cleared.")) return;
   try {
-    cfg = await api("/api/init", { league_id: id, force: saved });
+    cfg = await api("/api/init", { league_id: id, platform, force: saved,
+      espn_s2: $("espn_s2").value.trim(), swid: $("swid").value.trim() });
     $("league_id").value = "";
+    $("espn_s2").value = "";
+    $("swid").value = "";
     await refreshLeagues();
     renderTeams();
     await loadSeasons();
@@ -170,7 +190,7 @@ $("go").onclick = async () => {
   showError("");
   $("result").value = "Working...";
   try {
-    const d = await api("/api/generate", { league_id: cfg.league_id, season: Number($("season").value), week: Number($("week").value) });
+    const d = await api("/api/generate", { league_key: cfg.key, season: Number($("season").value), week: Number($("week").value) });
     $("result").value = d.body;
     $("saved_path").textContent = "Saved to " + d.out_path;
   } catch (e) { $("result").value = ""; showError(e.message); }

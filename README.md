@@ -23,9 +23,20 @@ email; paste the reply into your own email client. Saved leagues
 appear in a dropdown next time. Everything lives in a `Postgame` folder in
 your home directory (`leagues/` and `recaps/`).
 
-Find your league ID: open your league at sleeper.com and copy the long
-number after `/leagues/` in the URL. On the mobile app, open league
-settings, copy the league link, and take the same number.
+Supported platforms: Sleeper and ESPN.
+
+Find your league ID:
+
+- Sleeper: open your league at sleeper.com and copy the long number after
+  `/leagues/` in the URL. On the mobile app, open league settings, copy
+  the league link, and take the same number.
+- ESPN: open your league at fantasy.espn.com and copy the number after
+  `leagueId=` in the URL. Public leagues need nothing else. Private
+  leagues need two cookies: log in at espn.com, open your browser's dev
+  tools, go to Application (Chrome) or Storage (Firefox), Cookies, and
+  copy the values of `espn_s2` and `SWID` into the app. They are saved in
+  your league file on this computer only. ESPN does not expose waiver
+  pickups to the app, so that section is skipped for ESPN leagues.
 
 ## Developers
 
@@ -52,6 +63,8 @@ Everything below is for running from source.
 
    ```bash
    python -m sleeper_recap init --league-id YOUR_LEAGUE_ID
+   python -m sleeper_recap init --platform espn --league-id YOUR_LEAGUE_ID          # public ESPN league
+   python -m sleeper_recap init --platform espn --league-id ID --espn-s2 ... --swid ...   # private ESPN league
    ```
 
    Then edit `config.toml`: fill in each owner's real name, email, and

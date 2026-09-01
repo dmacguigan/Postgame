@@ -5,7 +5,9 @@ import webbrowser
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from sleeper_recap import cli, sleeper
+import re
+
+from sleeper_recap import cli, platforms
 from sleeper_recap import config as cfgmod
 
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -24,15 +26,22 @@ def _guard(fn):
     return wrapper
 
 
-def _path(league_id):
+def _path(key):
+    key = str(key or "").strip()
+    if not re.fullmatch(r"(espn_)?[0-9]+", key):
+        raise SystemExit("bad league key")
+    return os.path.join(LEAGUES_DIR, f"{key}.toml")
+
+
+def _key(platform, league_id):
     lid = str(league_id or "").strip()
     if not lid.isdigit():
         raise SystemExit("league ID must be a number")
-    return os.path.join(LEAGUES_DIR, f"{lid}.toml")
+    return lid if platform == "sleeper" else f"{platform}_{lid}"
 
 
-def _load(league_id):
-    path = _path(league_id)
+def _load(key):
+    path = _path(key)
     if not os.path.exists(path):
         raise SystemExit("league not saved yet; enter its ID and click Load")
     return cfgmod.load(path)
@@ -52,53 +61,66 @@ def create_app():
             for name in sorted(os.listdir(LEAGUES_DIR)):
                 if name.endswith(".toml"):
                     cfg = cfgmod.load(os.path.join(LEAGUES_DIR, name))
-                    out.append({"league_id": cfg["league_id"], "name": cfg.get("league_name") or cfg["league_id"]})
+                    out.append({
+                        "key": name[:-5],
+                        "name": cfg.get("league_name") or cfg["league_id"],
+                        "platform": cfg.get("platform", "sleeper"),
+                    })
         return jsonify(out)
 
     @app.get("/api/config")
     @_guard
     def get_config():
-        return jsonify(_load(request.args.get("league_id")))
+        cfg = _load(request.args.get("league_key"))
+        cfg.pop("espn_s2", None)
+        cfg.pop("swid", None)
+        return jsonify(cfg)
 
     @app.post("/api/init")
     @_guard
     def init():
         d = request.json or {}
-        path = _path(d.get("league_id"))
+        platform = d.get("platform") or "sleeper"
+        if platform not in ("sleeper", "espn"):
+            raise SystemExit("unknown platform")
+        key = _key(platform, d.get("league_id"))
+        path = _path(key)
         if os.path.exists(path) and not d.get("force"):
             return jsonify(error="league already saved"), 409
-        cfg = cfgmod.scaffold(str(d["league_id"]).strip())
+        cfg = cfgmod.scaffold(key.split("_")[-1], platform, d.get("espn_s2") or "", d.get("swid") or "")
         os.makedirs(LEAGUES_DIR, exist_ok=True)
         cfgmod.save(path, cfg)
-        return jsonify(cfg)
+        cfg.pop("espn_s2", None)
+        cfg.pop("swid", None)
+        return jsonify(dict(cfg, key=key))
 
     @app.post("/api/config")
     @_guard
     def put_config():
-        cfg = request.json or {}
-        path = _path(cfg.get("league_id"))
-        os.makedirs(LEAGUES_DIR, exist_ok=True)
-        cfgmod.save(path, cfg)
-        return jsonify(cfgmod.load(path))
+        new = request.json or {}
+        key = _key(new.get("platform", "sleeper"), new.get("league_id"))
+        cfg = _load(key)
+        for field in ("tone", "teams"):
+            if field in new:
+                cfg[field] = new[field]
+        cfgmod.save(_path(key), cfg)
+        cfg.pop("espn_s2", None)
+        cfg.pop("swid", None)
+        return jsonify(cfg)
 
     @app.get("/api/seasons")
     @_guard
     def seasons():
-        cfg = _load(request.args.get("league_id"))
-        out = []
-        lg = sleeper.league(cfg["league_id"])
-        while lg:
-            out.append({"season": lg["season"], "league_id": lg["league_id"]})
-            prev = lg.get("previous_league_id")
-            lg = sleeper.league(prev) if prev else None
-        return jsonify(out)
+        cfg = _load(request.args.get("league_key"))
+        return jsonify(platforms.open(cfg).seasons())
 
     @app.post("/api/generate")
     @_guard
     def generate():
         d = request.json or {}
-        cfg = _load(d.get("league_id"))
-        out = os.path.join("recaps", cfg["league_id"], f"{d.get('season')}_week_{d.get('week')}_prompt.md")
+        key = d.get("league_key")
+        cfg = _load(key)
+        out = os.path.join("recaps", key, f"{d.get('season')}_week_{d.get('week')}_prompt.md")
         body, out = cli.run_recap(cfg, week=d.get("week"), season=d.get("season"), provider="manual", out=out)
         return jsonify(body=body, out_path=os.path.abspath(out))
 

@@ -40,7 +40,7 @@ def test_leagues_empty_before_init(client):
 
 
 def test_config_400_before_init(client):
-    r = client.get("/api/config?league_id=999")
+    r = client.get("/api/config?league_key=999")
     assert r.status_code == 400
     assert "Load" in r.get_json()["error"]
 
@@ -49,8 +49,8 @@ def test_init_then_get_config_and_leagues(client):
     r = client.post("/api/init", json={"league_id": "999"})
     assert r.status_code == 200
     assert r.get_json()["teams"]["1"]["team_name"] == "Alice Attack"
-    assert client.get("/api/config?league_id=999").get_json()["league_id"] == "999"
-    assert client.get("/api/leagues").get_json() == [{"league_id": "999", "name": "Test League"}]
+    assert client.get("/api/config?league_key=999").get_json()["league_id"] == "999"
+    assert client.get("/api/leagues").get_json() == [{"key": "999", "name": "Test League", "platform": "sleeper"}]
 
 
 def test_init_refuses_overwrite_without_force(client):
@@ -59,7 +59,7 @@ def test_init_refuses_overwrite_without_force(client):
     client.post("/api/config", json=cfg)
     r = client.post("/api/init", json={"league_id": "999"})
     assert r.status_code == 409
-    assert client.get("/api/config?league_id=999").get_json()["teams"]["1"]["owner_name"] == "Alice"
+    assert client.get("/api/config?league_key=999").get_json()["teams"]["1"]["owner_name"] == "Alice"
     r = client.post("/api/init", json={"league_id": "999", "force": True})
     assert r.status_code == 200
     assert r.get_json()["teams"]["1"]["owner_name"] == ""
@@ -76,7 +76,7 @@ def test_save_config(client):
     cfg["tone"] = "dry"
     r = client.post("/api/config", json=cfg)
     assert r.status_code == 200
-    assert client.get("/api/config?league_id=999").get_json()["teams"]["1"]["email"] == "a@example.com"
+    assert client.get("/api/config?league_key=999").get_json()["teams"]["1"]["email"] == "a@example.com"
 
 
 def test_seasons_walks_chain(client, monkeypatch):
@@ -86,7 +86,7 @@ def test_seasons_walks_chain(client, monkeypatch):
     }
     monkeypatch.setattr(sleeper, "league", lambda lid: leagues[lid])
     client.post("/api/init", json={"league_id": "999"})
-    r = client.get("/api/seasons?league_id=999")
+    r = client.get("/api/seasons?league_key=999")
     assert r.get_json() == [
         {"season": "2026", "league_id": "999"},
         {"season": "2025", "league_id": "888"},
@@ -97,7 +97,7 @@ def test_generate_manual(client):
     cfg = client.post("/api/init", json={"league_id": "999"}).get_json()
     cfg["teams"]["1"]["email"] = "a@example.com"
     client.post("/api/config", json=cfg)
-    r = client.post("/api/generate", json={"league_id": "999", "season": 2026, "week": 2})
+    r = client.post("/api/generate", json={"league_key": "999", "season": 2026, "week": 2})
     assert r.status_code == 200
     d = r.get_json()
     assert "Copy everything below" in d["body"]
@@ -110,13 +110,13 @@ def test_generate_no_scores_is_400(client, monkeypatch):
     zero = [dict(m, points=0) for m in MATCHUPS]
     monkeypatch.setattr(sleeper, "matchups", lambda lid, week: zero)
     client.post("/api/init", json={"league_id": "999"})
-    r = client.post("/api/generate", json={"league_id": "999", "season": 2026, "week": 1})
+    r = client.post("/api/generate", json={"league_key": "999", "season": 2026, "week": 1})
     assert r.status_code == 400
     assert "no scores yet" in r.get_json()["error"]
 
 
 def test_generate_without_config_is_400(client):
-    r = client.post("/api/generate", json={"league_id": "999", "week": 2})
+    r = client.post("/api/generate", json={"league_key": "999", "week": 2})
     assert r.status_code == 400
     assert "Load" in r.get_json()["error"]
 
@@ -125,7 +125,37 @@ def test_save_keeps_emails_from_cli(client):
     cfg = client.post("/api/init", json={"league_id": "999"}).get_json()
     cfg["teams"]["1"]["email"] = "a@example.com"
     client.post("/api/config", json=cfg)
-    cfg = client.get("/api/config?league_id=999").get_json()
+    cfg = client.get("/api/config?league_key=999").get_json()
     cfg["teams"]["1"]["owner_name"] = "Alice"
     client.post("/api/config", json=cfg)
-    assert client.get("/api/config?league_id=999").get_json()["teams"]["1"]["email"] == "a@example.com"
+    assert client.get("/api/config?league_key=999").get_json()["teams"]["1"]["email"] == "a@example.com"
+
+
+def test_espn_init_uses_key_and_hides_cookies(client, monkeypatch):
+    from sleeper_recap import config as cfgmod
+
+    seen = {}
+
+    def fake_scaffold(league_id, platform="sleeper", espn_s2="", swid=""):
+        seen.update(league_id=league_id, platform=platform, espn_s2=espn_s2, swid=swid)
+        return {"league_id": league_id, "league_name": "E", "platform": platform,
+                "espn_s2": espn_s2, "swid": swid, "teams": {}}
+
+    monkeypatch.setattr(cfgmod, "scaffold", fake_scaffold)
+    r = client.post("/api/init", json={"league_id": "42", "platform": "espn", "espn_s2": "s2", "swid": "{W}"})
+    assert r.status_code == 200
+    assert seen == {"league_id": "42", "platform": "espn", "espn_s2": "s2", "swid": "{W}"}
+    d = r.get_json()
+    assert d["key"] == "espn_42"
+    assert "espn_s2" not in d and "swid" not in d
+    assert client.get("/api/leagues").get_json() == [{"key": "espn_42", "name": "E", "platform": "espn"}]
+    cfg = client.get("/api/config?league_key=espn_42").get_json()
+    assert "espn_s2" not in cfg
+    cfg["tone"] = "dry"
+    client.post("/api/config", json=cfg)
+    saved = cfgmod.load("leagues/espn_42.toml")
+    assert saved["espn_s2"] == "s2" and saved["tone"] == "dry"
+
+
+def test_bad_league_key_rejected(client):
+    assert client.get("/api/config?league_key=../x").status_code == 400
