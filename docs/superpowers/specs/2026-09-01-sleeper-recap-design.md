@@ -17,8 +17,15 @@ season).
 ## Environment and dependencies
 
 - Python >= 3.11, managed with conda/mamba via `environment.yml`.
-- Dependencies (pip section of environment.yml): `requests`, `anthropic`,
-  `openai`, `google-genai`.
+- Required dependency (pip section of environment.yml): `requests`.
+- Provider SDKs are optional: `anthropic`, `openai`, `google-genai` appear
+  commented out in environment.yml; user uncomments/installs only the one(s)
+  for their chosen provider. `llm.py` imports the SDK lazily inside each
+  provider function; a missing package exits with a clear message, e.g.
+  "provider anthropic needs: pip install anthropic".
+- Anthropic note: the `anthropic` SDK also picks up `ant auth login` / Claude
+  CLI credentials automatically, so `ANTHROPIC_API_KEY` may be unnecessary
+  for those users. OpenAI and Gemini always need their env var.
 - Config parsing: stdlib `tomllib` (read), plain string templating (write).
 
 ## Security: API keys
