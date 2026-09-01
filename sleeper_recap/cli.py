@@ -99,5 +99,8 @@ def main(argv=None):
     p_recap.add_argument("--out")
     p_recap.set_defaults(fn=cmd_recap)
 
+    p_app = sub.add_parser("app", help="run the local web app")
+    p_app.set_defaults(fn=lambda args: __import__("sleeper_recap.app", fromlist=["main"]).main())
+
     args = parser.parse_args(argv)
     args.fn(args)

@@ -1,1 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <title>Postgame</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+  h1 { margin-bottom: 0; }
+  section { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+  label { display: block; font-size: 0.85rem; color: #555; margin-top: 0.5rem; }
+  input, select, textarea { width: 100%; box-sizing: border-box; padding: 0.4rem; font: inherit; }
+  textarea { min-height: 300px; font-family: monospace; }
+  button { padding: 0.5rem 1rem; font: inherit; cursor: pointer; margin-top: 0.5rem; }
+  .team { border-top: 1px solid #eee; padding: 0.5rem 0; }
+  .team h3 { margin: 0.25rem 0; }
+  #error { background: #fee; color: #900; padding: 0.5rem; border-radius: 6px; display: none; }
+  .muted { color: #666; font-size: 0.9rem; }
+  .row { display: flex; gap: 1rem; }
+  .row > * { flex: 1; }
+</style>
+</head>
+<body>
+<h1>Postgame</h1>
+<p class="muted">Weekly recap prompts for your Sleeper league.</p>
+<div id="error"></div>
+
+<section id="league">
+  <h2>1. League</h2>
+  <label>Sleeper league ID (the long number in your league URL)</label>
+  <div class="row">
+    <input id="league_id" placeholder="1234567890123456789">
+    <button id="load">Load league</button>
+  </div>
+</section>
+
+<section id="teams" style="display:none">
+  <h2>2. Teams</h2>
+  <label>Tone</label>
+  <input id="tone">
+  <div id="team_list"></div>
+  <button id="save">Save</button>
+  <span id="saved" class="muted"></span>
+</section>
+
+<section id="generate" style="display:none">
+  <h2>3. Generate</h2>
+  <div class="row">
+    <div><label>Season</label><select id="season"></select></div>
+    <div><label>Week</label><select id="week"></select></div>
+  </div>
+  <button id="go">Generate prompt</button>
+  <label>Prompt (paste into claude.ai, ChatGPT, or Gemini, then paste the reply into your email)</label>
+  <textarea id="result" readonly></textarea>
+  <button id="copy">Copy prompt</button>
+  <p id="recipients" class="muted"></p>
+  <p id="saved_path" class="muted"></p>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+let cfg = null;
+
+function showError(msg) { $("error").textContent = msg; $("error").style.display = msg ? "block" : "none"; }
+
+async function api(path, body) {
+  const opts = body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {};
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+
+function field(rid, key, label, value) {
+  const wrap = document.createElement("div");
+  const lab = document.createElement("label");
+  lab.textContent = label;
+  const inp = document.createElement("input");
+  inp.dataset.rid = rid;
+  inp.dataset.key = key;
+  inp.value = value || "";
+  wrap.append(lab, inp);
+  return wrap;
+}
+
+function renderTeams() {
+  $("tone").value = cfg.tone || "";
+  $("team_list").innerHTML = "";
+  for (const [rid, t] of Object.entries(cfg.teams)) {
+    const div = document.createElement("div");
+    div.className = "team";
+    const h = document.createElement("h3");
+    h.textContent = t.team_name;
+    div.append(h,
+      field(rid, "owner_name", "Owner name", t.owner_name),
+      field(rid, "email", "Email", t.email),
+      field(rid, "fun_facts", "Fun facts", t.fun_facts));
+    $("team_list").appendChild(div);
+  }
+  $("teams").style.display = "";
+  $("generate").style.display = "";
+}
+
+async function loadSeasons() {
+  const seasons = await api("/api/seasons");
+  $("season").innerHTML = seasons.map(s => `<option value="${s.season}">${s.season}</option>`).join("");
+  $("week").innerHTML = Array.from({ length: 18 }, (_, i) => `<option value="${i + 1}">Week ${i + 1}</option>`).join("");
+}
+
+async function boot() {
+  try {
+    cfg = await api("/api/config");
+    $("league_id").value = cfg.league_id;
+    renderTeams();
+    await loadSeasons();
+  } catch (e) { /* no config yet */ }
+}
+
+$("load").onclick = async () => {
+  showError("");
+  try {
+    cfg = await api("/api/init", { league_id: $("league_id").value.trim() });
+    renderTeams();
+    await loadSeasons();
+  } catch (e) { showError(e.message); }
+};
+
+$("save").onclick = async () => {
+  showError("");
+  cfg.tone = $("tone").value;
+  for (const el of $("team_list").querySelectorAll("input")) cfg.teams[el.dataset.rid][el.dataset.key] = el.value;
+  try {
+    cfg = await api("/api/config", cfg);
+    $("saved").textContent = "Saved.";
+    setTimeout(() => $("saved").textContent = "", 2000);
+  } catch (e) { showError(e.message); }
+};
+
+$("go").onclick = async () => {
+  showError("");
+  $("result").value = "Working...";
+  try {
+    const d = await api("/api/generate", { season: Number($("season").value), week: Number($("week").value) });
+    $("result").value = d.body;
+    $("recipients").textContent = "Send to: " + (d.recipients.length ? d.recipients.join(", ") : "(no emails set)");
+    $("saved_path").textContent = "Saved to " + d.out_path;
+  } catch (e) { $("result").value = ""; showError(e.message); }
+};
+
+$("copy").onclick = async () => {
+  await navigator.clipboard.writeText($("result").value);
+  $("copy").textContent = "Copied!";
+  setTimeout(() => $("copy").textContent = "Copy prompt", 1500);
+};
+
+boot();
+</script>
+</body>
+</html>
