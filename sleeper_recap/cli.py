@@ -2,45 +2,33 @@ import argparse
 import os
 
 from sleeper_recap import config as cfgmod
-from sleeper_recap import enrich, llm, recap, sleeper
+from sleeper_recap import enrich, llm, platforms, recap
 
 
 def cmd_init(args):
     if os.path.exists(args.config) and not args.force:
         raise SystemExit(f"{args.config} exists; use --force to overwrite")
-    cfgmod.save(args.config, cfgmod.scaffold(args.league_id))
+    cfgmod.save(args.config, cfgmod.scaffold(args.league_id, args.platform, args.espn_s2, args.swid))
     print(f"Wrote {args.config}. Fill in owner_name, email, and fun_facts for each team.")
 
 
 def run_recap(config, week=None, season=None, provider=None, model=None, out=None):
-    league_id = config.get("league_id")
-    if not league_id:
-        raise SystemExit("config missing league_id; re-run init")
     if season and not week:
         raise SystemExit("--season requires --week (past seasons have no current week)")
-    league_obj = None
-    if season:
-        lg = sleeper.league(league_id)
-        while lg.get("season") != str(season):
-            prev = lg.get("previous_league_id")
-            if not prev:
-                raise SystemExit(f"no {season} season found in this league's history")
-            lg = sleeper.league(prev)
-        league_id = lg["league_id"]
-        league_obj = lg
+    sp = platforms.open(config, season)
+    league_id = sp.league_id
+    league_obj = sp.league_obj
 
-    week = week or max(sleeper.nfl_state()["week"] - 1, 1)
-    matchups = sleeper.matchups(league_id, week)
+    week = week or max(sp.nfl_state()["week"] - 1, 1)
+    matchups = sp.matchups(league_id, week)
     if not matchups or all((m.get("points") or 0) == 0 for m in matchups):
         raise SystemExit(f"no scores yet for week {week}; pick another week with --week")
 
-    if league_obj is None:
-        league_obj = sleeper.league(league_id)
-    users_list = sleeper.users(league_id)
-    rosters_list = sleeper.rosters(league_id)
+    users_list = sp.users(league_id)
+    rosters_list = sp.rosters(league_id)
 
     try:
-        extra = enrich.gather(league_id, league_obj["season"], week, matchups, rosters_list)
+        extra = enrich.gather(league_id, league_obj["season"], week, matchups, rosters_list, sleeper_mod=sp)
     except (SystemExit, Exception) as e:
         print(f"warning: enrichment unavailable ({e}); using basic recap data")
         extra = None
@@ -88,6 +76,9 @@ def main(argv=None):
     p_init.add_argument("--league-id", required=True)
     p_init.add_argument("--config", default="config.toml")
     p_init.add_argument("--force", action="store_true")
+    p_init.add_argument("--platform", choices=["sleeper", "espn"], default="sleeper")
+    p_init.add_argument("--espn-s2", default="", help="ESPN private league cookie")
+    p_init.add_argument("--swid", default="", help="ESPN private league cookie")
     p_init.set_defaults(fn=cmd_init)
 
     p_recap = sub.add_parser("recap", help="draft the weekly recap email")
