@@ -17,11 +17,15 @@
   .muted { color: #666; font-size: 0.9rem; }
   .row { display: flex; gap: 1rem; }
   .row > * { flex: 1; }
+  .row > button { flex: 0 0 auto; margin-top: 0; }
+  details { margin-top: 0.5rem; }
+  details ol { margin: 0.25rem 0 0.5rem; padding-left: 1.25rem; }
+  details li { margin: 0.2rem 0; }
 </style>
 </head>
 <body>
 <h1>Postgame</h1>
-<p class="muted">Weekly recap prompts for your Sleeper league.</p>
+<p class="muted">Weekly recap prompts for your Sleeper or ESPN league.</p>
 <div id="error"></div>
 
 <section id="league">
@@ -40,11 +44,24 @@
     <button id="load">Load league</button>
   </div>
   <div id="espn_fields" style="display:none">
-    <p class="muted">Public ESPN leagues need nothing else. Private leagues need two cookies from ESPN.com:
-      log in, open browser dev tools, Application, Cookies, then copy espn_s2 and SWID.</p>
+    <p class="muted">Find the league ID after <code>leagueId=</code> in your league's URL at fantasy.espn.com.
+      Public leagues need nothing else. Private leagues need two cookies so the app can read the league as you.</p>
+    <details>
+      <summary class="muted">How to get espn_s2 and SWID for a private league</summary>
+      <ol class="muted">
+        <li>Log in at espn.com in Chrome, Edge, or Firefox and open your league page.</li>
+        <li>Open developer tools: press F12, or right-click the page and choose Inspect.</li>
+        <li>Chrome and Edge: click the <b>Application</b> tab. Firefox: click the <b>Storage</b> tab.</li>
+        <li>In the left sidebar expand <b>Cookies</b> and click <b>https://fantasy.espn.com</b> (or any espn.com entry).</li>
+        <li>Find the row named <b>espn_s2</b>. Double-click its Value, copy the whole long string, paste it below.</li>
+        <li>Find the row named <b>SWID</b>. Copy its value including the curly braces, like <code>{1234ABCD-...}</code>, paste it below.</li>
+        <li>Click Load league. The cookies are saved in your league file on this computer and never shown here again.</li>
+      </ol>
+      <p class="muted">Cookies expire after a long time. If a saved league stops loading, remove it and add it again with fresh cookies.</p>
+    </details>
     <div class="row">
-      <div><label>espn_s2</label><input id="espn_s2"></div>
-      <div><label>SWID</label><input id="swid" placeholder="{...}"></div>
+      <div><label>espn_s2</label><input id="espn_s2" placeholder="AEB...long string"></div>
+      <div><label>SWID</label><input id="swid" placeholder="{1234ABCD-1234-1234-1234-1234ABCD5678}"></div>
     </div>
   </div>
 </section>
