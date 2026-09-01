@@ -3,10 +3,11 @@ import tomllib
 import pytest
 
 from sleeper_recap import config, sleeper
-from tests.fixtures.week_data import ROSTERS, USERS
+from tests.fixtures.week_data import LEAGUE, ROSTERS, USERS
 
 
 def _patch(monkeypatch):
+    monkeypatch.setattr(sleeper, "league", lambda lid: LEAGUE)
     monkeypatch.setattr(sleeper, "users", lambda lid: USERS)
     monkeypatch.setattr(sleeper, "rosters", lambda lid: ROSTERS)
 
@@ -16,6 +17,7 @@ def test_scaffold_builds_teams(monkeypatch):
     cfg = config.scaffold("999")
     assert cfg["league_id"] == "999"
     assert cfg["provider"] == "manual"
+    assert cfg["league_name"] == "Test League"
     assert cfg["teams"]["1"]["team_name"] == "Alice Attack"
     assert cfg["teams"]["2"]["team_name"] == "bob_ff"
     assert cfg["teams"]["1"]["owner_name"] == ""

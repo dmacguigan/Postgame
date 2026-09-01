@@ -17,6 +17,7 @@ def load(path):
 
 
 def scaffold(league_id):
+    league = sleeper.league(league_id)
     users = sleeper.users(league_id)
     rosters = sleeper.rosters(league_id)
     names = {}
@@ -37,6 +38,7 @@ def scaffold(league_id):
         }
     return {
         "league_id": str(league_id),
+        "league_name": league.get("name", ""),
         "provider": "manual",
         "model": llm.DEFAULT_MODELS["anthropic"],
         "tone": "funny, light trash talk, inside jokes welcome",
@@ -47,6 +49,7 @@ def scaffold(league_id):
 def save(path, cfg):
     lines = [
         f"league_id = {_toml_str(cfg['league_id'])}",
+        f"league_name = {_toml_str(cfg.get('league_name', ''))}",
         f"provider = {_toml_str(cfg.get('provider', 'manual'))}  # manual | anthropic | openai | gemini",
         f"model = {_toml_str(cfg.get('model', llm.DEFAULT_MODELS['anthropic']))}",
         f"tone = {_toml_str(cfg.get('tone', ''))}",

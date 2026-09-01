@@ -26,7 +26,11 @@
 
 <section id="league">
   <h2>1. League</h2>
-  <label>Sleeper league ID (the long number in your league URL)</label>
+  <div id="saved_wrap" style="display:none">
+    <label>Saved leagues</label>
+    <select id="league_select"></select>
+  </div>
+  <label>Add a league: Sleeper league ID (the long number in your league URL)</label>
   <div class="row">
     <input id="league_id" placeholder="1234567890123456789">
     <button id="load">Load league</button>
@@ -101,24 +105,53 @@ function renderTeams() {
 }
 
 async function loadSeasons() {
-  const seasons = await api("/api/seasons");
+  const seasons = await api("/api/seasons?league_id=" + cfg.league_id);
   $("season").innerHTML = seasons.map(s => `<option value="${s.season}">${s.season}</option>`).join("");
   $("week").innerHTML = Array.from({ length: 18 }, (_, i) => `<option value="${i + 1}">Week ${i + 1}</option>`).join("");
 }
 
+async function refreshLeagues() {
+  const leagues = await api("/api/leagues");
+  $("saved_wrap").style.display = leagues.length ? "" : "none";
+  $("league_select").innerHTML = "";
+  for (const l of leagues) {
+    const opt = document.createElement("option");
+    opt.value = l.league_id;
+    opt.textContent = l.name;
+    $("league_select").appendChild(opt);
+  }
+  if (cfg) $("league_select").value = cfg.league_id;
+  return leagues;
+}
+
+async function openLeague(id) {
+  cfg = await api("/api/config?league_id=" + id);
+  $("league_select").value = id;
+  renderTeams();
+  await loadSeasons();
+}
+
 async function boot() {
   try {
-    cfg = await api("/api/config");
-    $("league_id").value = cfg.league_id;
-    renderTeams();
-    await loadSeasons();
-  } catch (e) { /* no config yet */ }
+    const leagues = await refreshLeagues();
+    if (leagues.length) await openLeague(leagues[0].league_id);
+  } catch (e) { showError(e.message); }
 }
+
+$("league_select").onchange = async () => {
+  showError("");
+  try { await openLeague($("league_select").value); } catch (e) { showError(e.message); }
+};
 
 $("load").onclick = async () => {
   showError("");
+  const id = $("league_id").value.trim();
+  const saved = [...$("league_select").options].some(o => o.value === id);
+  if (saved && !confirm("This league is already saved. Replace it? Owner names, emails, and fun facts will be cleared.")) return;
   try {
-    cfg = await api("/api/init", { league_id: $("league_id").value.trim() });
+    cfg = await api("/api/init", { league_id: id, force: saved });
+    $("league_id").value = "";
+    await refreshLeagues();
     renderTeams();
     await loadSeasons();
   } catch (e) { showError(e.message); }
@@ -139,7 +172,7 @@ $("go").onclick = async () => {
   showError("");
   $("result").value = "Working...";
   try {
-    const d = await api("/api/generate", { season: Number($("season").value), week: Number($("week").value) });
+    const d = await api("/api/generate", { league_id: cfg.league_id, season: Number($("season").value), week: Number($("week").value) });
     $("result").value = d.body;
     $("recipients").textContent = "Send to: " + (d.recipients.length ? d.recipients.join(", ") : "(no emails set)");
     $("saved_path").textContent = "Saved to " + d.out_path;

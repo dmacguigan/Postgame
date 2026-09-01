@@ -35,17 +35,39 @@ def test_index_serves_html(client):
     assert b"Postgame" in r.data
 
 
-def test_config_404_before_init(client):
-    r = client.get("/api/config")
-    assert r.status_code == 404
-    assert "error" in r.get_json()
+def test_leagues_empty_before_init(client):
+    assert client.get("/api/leagues").get_json() == []
 
 
-def test_init_then_get_config(client):
+def test_config_400_before_init(client):
+    r = client.get("/api/config?league_id=999")
+    assert r.status_code == 400
+    assert "Load" in r.get_json()["error"]
+
+
+def test_init_then_get_config_and_leagues(client):
     r = client.post("/api/init", json={"league_id": "999"})
     assert r.status_code == 200
     assert r.get_json()["teams"]["1"]["team_name"] == "Alice Attack"
-    assert client.get("/api/config").get_json()["league_id"] == "999"
+    assert client.get("/api/config?league_id=999").get_json()["league_id"] == "999"
+    assert client.get("/api/leagues").get_json() == [{"league_id": "999", "name": "Test League"}]
+
+
+def test_init_refuses_overwrite_without_force(client):
+    cfg = client.post("/api/init", json={"league_id": "999"}).get_json()
+    cfg["teams"]["1"]["owner_name"] = "Alice"
+    client.post("/api/config", json=cfg)
+    r = client.post("/api/init", json={"league_id": "999"})
+    assert r.status_code == 409
+    assert client.get("/api/config?league_id=999").get_json()["teams"]["1"]["owner_name"] == "Alice"
+    r = client.post("/api/init", json={"league_id": "999", "force": True})
+    assert r.status_code == 200
+    assert r.get_json()["teams"]["1"]["owner_name"] == ""
+
+
+def test_init_rejects_bad_id(client):
+    r = client.post("/api/init", json={"league_id": "../x"})
+    assert r.status_code == 400
 
 
 def test_save_config(client):
@@ -54,7 +76,7 @@ def test_save_config(client):
     cfg["tone"] = "dry"
     r = client.post("/api/config", json=cfg)
     assert r.status_code == 200
-    assert client.get("/api/config").get_json()["teams"]["1"]["email"] == "a@example.com"
+    assert client.get("/api/config?league_id=999").get_json()["teams"]["1"]["email"] == "a@example.com"
 
 
 def test_seasons_walks_chain(client, monkeypatch):
@@ -64,7 +86,7 @@ def test_seasons_walks_chain(client, monkeypatch):
     }
     monkeypatch.setattr(sleeper, "league", lambda lid: leagues[lid])
     client.post("/api/init", json={"league_id": "999"})
-    r = client.get("/api/seasons")
+    r = client.get("/api/seasons?league_id=999")
     assert r.get_json() == [
         {"season": "2026", "league_id": "999"},
         {"season": "2025", "league_id": "888"},
@@ -75,11 +97,11 @@ def test_generate_manual(client):
     cfg = client.post("/api/init", json={"league_id": "999"}).get_json()
     cfg["teams"]["1"]["email"] = "a@example.com"
     client.post("/api/config", json=cfg)
-    r = client.post("/api/generate", json={"week": 2})
+    r = client.post("/api/generate", json={"league_id": "999", "season": 2026, "week": 2})
     assert r.status_code == 200
     d = r.get_json()
     assert "Copy everything below" in d["body"]
-    assert d["out_path"].endswith("week_2_prompt.md")
+    assert d["out_path"].endswith("recaps/999/2026_week_2_prompt.md")
     assert d["recipients"] == ["a@example.com"]
     assert not re.search(r"[\w.]+@[\w.]+", d["body"])
 
@@ -88,12 +110,12 @@ def test_generate_no_scores_is_400(client, monkeypatch):
     zero = [dict(m, points=0) for m in MATCHUPS]
     monkeypatch.setattr(sleeper, "matchups", lambda lid, week: zero)
     client.post("/api/init", json={"league_id": "999"})
-    r = client.post("/api/generate", json={"week": 1})
+    r = client.post("/api/generate", json={"league_id": "999", "season": 2026, "week": 1})
     assert r.status_code == 400
     assert "no scores yet" in r.get_json()["error"]
 
 
 def test_generate_without_config_is_400(client):
-    r = client.post("/api/generate", json={"week": 2})
+    r = client.post("/api/generate", json={"league_id": "999", "week": 2})
     assert r.status_code == 400
-    assert "init" in r.get_json()["error"]
+    assert "Load" in r.get_json()["error"]

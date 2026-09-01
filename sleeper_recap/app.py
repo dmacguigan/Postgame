@@ -9,7 +9,7 @@ from sleeper_recap import cli, sleeper
 from sleeper_recap import config as cfgmod
 
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-CONFIG = "config.toml"
+LEAGUES_DIR = "leagues"
 PORT = 8484
 
 
@@ -24,6 +24,20 @@ def _guard(fn):
     return wrapper
 
 
+def _path(league_id):
+    lid = str(league_id or "").strip()
+    if not lid.isdigit():
+        raise SystemExit("league ID must be a number")
+    return os.path.join(LEAGUES_DIR, f"{lid}.toml")
+
+
+def _load(league_id):
+    path = _path(league_id)
+    if not os.path.exists(path):
+        raise SystemExit("league not saved yet; enter its ID and click Load")
+    return cfgmod.load(path)
+
+
 def create_app():
     app = Flask(__name__, static_folder=None)
 
@@ -31,29 +45,46 @@ def create_app():
     def index():
         return send_from_directory(STATIC, "index.html")
 
+    @app.get("/api/leagues")
+    def leagues():
+        out = []
+        if os.path.isdir(LEAGUES_DIR):
+            for name in sorted(os.listdir(LEAGUES_DIR)):
+                if name.endswith(".toml"):
+                    cfg = cfgmod.load(os.path.join(LEAGUES_DIR, name))
+                    out.append({"league_id": cfg["league_id"], "name": cfg.get("league_name") or cfg["league_id"]})
+        return jsonify(out)
+
     @app.get("/api/config")
+    @_guard
     def get_config():
-        if not os.path.exists(CONFIG):
-            return jsonify(error="No league loaded yet. Enter your league ID."), 404
-        return jsonify(cfgmod.load(CONFIG))
+        return jsonify(_load(request.args.get("league_id")))
 
     @app.post("/api/init")
     @_guard
     def init():
-        cfg = cfgmod.scaffold(str(request.json["league_id"]).strip())
-        cfgmod.save(CONFIG, cfg)
+        d = request.json or {}
+        path = _path(d.get("league_id"))
+        if os.path.exists(path) and not d.get("force"):
+            return jsonify(error="league already saved"), 409
+        cfg = cfgmod.scaffold(str(d["league_id"]).strip())
+        os.makedirs(LEAGUES_DIR, exist_ok=True)
+        cfgmod.save(path, cfg)
         return jsonify(cfg)
 
     @app.post("/api/config")
     @_guard
     def put_config():
-        cfgmod.save(CONFIG, request.json)
-        return jsonify(cfgmod.load(CONFIG))
+        cfg = request.json or {}
+        path = _path(cfg.get("league_id"))
+        os.makedirs(LEAGUES_DIR, exist_ok=True)
+        cfgmod.save(path, cfg)
+        return jsonify(cfgmod.load(path))
 
     @app.get("/api/seasons")
     @_guard
     def seasons():
-        cfg = cfgmod.load(CONFIG)
+        cfg = _load(request.args.get("league_id"))
         out = []
         lg = sleeper.league(cfg["league_id"])
         while lg:
@@ -65,9 +96,10 @@ def create_app():
     @app.post("/api/generate")
     @_guard
     def generate():
-        cfg = cfgmod.load(CONFIG)
         d = request.json or {}
-        body, out = cli.run_recap(cfg, week=d.get("week"), season=d.get("season"), provider="manual")
+        cfg = _load(d.get("league_id"))
+        out = os.path.join("recaps", cfg["league_id"], f"{d.get('season')}_week_{d.get('week')}_prompt.md")
+        body, out = cli.run_recap(cfg, week=d.get("week"), season=d.get("season"), provider="manual", out=out)
         emails = [t["email"] for t in cfg.get("teams", {}).values() if t.get("email")]
         return jsonify(body=body, out_path=os.path.abspath(out), recipients=emails)
 

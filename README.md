@@ -18,8 +18,9 @@ Grab the latest file for your computer from the
   needed and run it.
 
 Your browser opens to the app. Enter your league ID, fill in owner names,
-emails, and fun facts, then generate a prompt for any week. Everything is
-saved in a `Postgame` folder in your home directory.
+emails, and fun facts, then generate a prompt for any week. Saved leagues
+appear in a dropdown next time. Everything lives in a `Postgame` folder in
+your home directory (`leagues/` and `recaps/`).
 
 Find your league ID: open your league at sleeper.com and copy the long
 number after `/leagues/` in the URL. On the mobile app, open league
