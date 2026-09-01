@@ -100,8 +100,7 @@ def create_app():
         cfg = _load(d.get("league_id"))
         out = os.path.join("recaps", cfg["league_id"], f"{d.get('season')}_week_{d.get('week')}_prompt.md")
         body, out = cli.run_recap(cfg, week=d.get("week"), season=d.get("season"), provider="manual", out=out)
-        emails = [t["email"] for t in cfg.get("teams", {}).values() if t.get("email")]
-        return jsonify(body=body, out_path=os.path.abspath(out), recipients=emails)
+        return jsonify(body=body, out_path=os.path.abspath(out))
 
     return app
 

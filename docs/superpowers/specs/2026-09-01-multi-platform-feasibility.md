@@ -143,13 +143,13 @@ Phase 3: polish
 - Platform badge in saved leagues dropdown; per-platform league ID help
   text; binary size check after adding deps.
 
-## Decisions needed from owner
+## Owner decisions (2026-09-01)
 
-1. Store ESPN cookies and Yahoo refresh tokens on disk (opt-in) or
-   memory only?
-2. Ship a Postgame Yahoo client secret inside the binary?
-3. Order: ESPN before Yahoo (recommended, cheaper and no auth for public
-   leagues).
+1. Yahoo deferred indefinitely; too complex for the target audience.
+2. ESPN cookies may be stored on disk under ~/Postgame (opt-in checkbox).
+3. ESPN goes next, after the neutral model refactor.
+4. App is manual mode only and does not collect or show emails; emails
+   stay a CLI-only feature.
 
 ## Sources
 

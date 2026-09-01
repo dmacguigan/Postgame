@@ -17,8 +17,9 @@ Grab the latest file for your computer from the
 - Linux: `Postgame-linux.tar.gz`. Extract, then `chmod +x Postgame` if
   needed and run it.
 
-Your browser opens to the app. Enter your league ID, fill in owner names,
-emails, and fun facts, then generate a prompt for any week. Saved leagues
+Your browser opens to the app. Enter your league ID, fill in owner names
+and fun facts, then generate a prompt for any week. The app never sends
+email; paste the reply into your own email client. Saved leagues
 appear in a dropdown next time. Everything lives in a `Postgame` folder in
 your home directory (`leagues/` and `recaps/`).
 

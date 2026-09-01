@@ -102,7 +102,7 @@ def test_generate_manual(client):
     d = r.get_json()
     assert "Copy everything below" in d["body"]
     assert d["out_path"].endswith("recaps/999/2026_week_2_prompt.md")
-    assert d["recipients"] == ["a@example.com"]
+    assert "recipients" not in d
     assert not re.search(r"[\w.]+@[\w.]+", d["body"])
 
 
@@ -119,3 +119,13 @@ def test_generate_without_config_is_400(client):
     r = client.post("/api/generate", json={"league_id": "999", "week": 2})
     assert r.status_code == 400
     assert "Load" in r.get_json()["error"]
+
+
+def test_save_keeps_emails_from_cli(client):
+    cfg = client.post("/api/init", json={"league_id": "999"}).get_json()
+    cfg["teams"]["1"]["email"] = "a@example.com"
+    client.post("/api/config", json=cfg)
+    cfg = client.get("/api/config?league_id=999").get_json()
+    cfg["teams"]["1"]["owner_name"] = "Alice"
+    client.post("/api/config", json=cfg)
+    assert client.get("/api/config?league_id=999").get_json()["teams"]["1"]["email"] == "a@example.com"
