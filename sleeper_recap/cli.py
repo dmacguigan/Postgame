@@ -3,7 +3,7 @@ import json
 import os
 import tomllib
 
-from sleeper_recap import llm, recap, sleeper
+from sleeper_recap import enrich, llm, recap, sleeper
 
 
 def _toml_str(value):
@@ -56,6 +56,7 @@ def cmd_recap(args):
 
     if args.season and not args.week:
         raise SystemExit("--season requires --week (past seasons have no current week)")
+    league_obj = None
     if args.season:
         lg = sleeper.league(league_id)
         while lg.get("season") != str(args.season):
@@ -64,19 +65,32 @@ def cmd_recap(args):
                 raise SystemExit(f"no {args.season} season found in this league's history")
             lg = sleeper.league(prev)
         league_id = lg["league_id"]
+        league_obj = lg
 
     week = args.week or max(sleeper.nfl_state()["week"] - 1, 1)
     matchups = sleeper.matchups(league_id, week)
     if not matchups or all((m.get("points") or 0) == 0 for m in matchups):
         raise SystemExit(f"no scores yet for week {week}; pick another week with --week")
 
+    if league_obj is None:
+        league_obj = sleeper.league(league_id)
+    users_list = sleeper.users(league_id)
+    rosters_list = sleeper.rosters(league_id)
+
+    try:
+        extra = enrich.gather(league_id, league_obj["season"], week, matchups, rosters_list)
+    except (SystemExit, Exception) as e:
+        print(f"warning: enrichment unavailable ({e}); using basic recap data")
+        extra = None
+
     prompt = recap.build_prompt(
-        sleeper.league(league_id),
-        sleeper.users(league_id),
-        sleeper.rosters(league_id),
+        league_obj,
+        users_list,
+        rosters_list,
         matchups,
         week,
         config,
+        extra=extra,
     )
     provider = args.provider or config.get("provider", "manual")
     if provider == "manual":

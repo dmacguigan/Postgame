@@ -1,9 +1,30 @@
-from sleeper_recap import recap
-from tests.fixtures.week_data import CONFIG, LEAGUE, MATCHUPS, ROSTERS, USERS
+from sleeper_recap import enrich, recap
+from tests.fixtures.week_data import (
+    CONFIG,
+    DRAFT_PICKS,
+    LEAGUE,
+    MATCHUPS,
+    PLAYERS,
+    ROSTERS,
+    STATS,
+    USERS,
+)
 
 
 def prompt():
     return recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG)
+
+
+def extra_fixture():
+    return {
+        "players": PLAYERS,
+        "stats": STATS,
+        "draft_slots": enrich._draft_slots(DRAFT_PICKS),
+        "pickups": [(4, "p6")],
+        "prev_matchups": {},
+        "team_streaks": {1: [(1, 100.0, "W"), (2, 110.0, "W")]},
+        "hot_cold": {},
+    }
 
 
 def test_matchup_results_present():
@@ -66,3 +87,29 @@ def test_standings_numeric_sort():
     team_b_idx = standings_section.index("Team B")
     team_a_idx = standings_section.index("Team A")
     assert team_b_idx < team_a_idx, "10-win team should appear before 9-win team in standings"
+
+
+def test_extra_none_prompt_unchanged():
+    assert prompt() == recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG, extra=None)
+
+
+def test_extra_adds_matchup_details():
+    p = recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG, extra=extra_fixture())
+    assert "Matchup details:" in p
+
+
+def test_extra_adds_roster_table_row_for_known_player():
+    p = recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG, extra=extra_fixture())
+    assert "| Alan Ace | QB | 27 | SF | R1.P3 | 200.0 | 2500 pass yd, 20 pass TD |" in p
+
+
+def test_extra_marks_undrafted_player_waiver_fa():
+    p = recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG, extra=extra_fixture())
+    assert "waiver/FA" in p
+
+
+def test_extra_form_guide_line():
+    p = recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG, extra=extra_fixture())
+    guide_idx = p.index("Form guide:")
+    section = p[guide_idx:]
+    assert "Alice Attack: last 2 weeks WW (100.0, 110.0)" in section

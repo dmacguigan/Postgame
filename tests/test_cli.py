@@ -2,8 +2,19 @@ import tomllib
 
 import pytest
 
-from sleeper_recap import cli, llm, sleeper
+from sleeper_recap import cli, enrich, llm, sleeper
 from tests.fixtures.week_data import LEAGUE, MATCHUPS, ROSTERS, USERS
+
+
+_EMPTY_EXTRA = {
+    "players": {},
+    "stats": {},
+    "draft_slots": {},
+    "pickups": [],
+    "prev_matchups": {},
+    "team_streaks": {},
+    "hot_cold": {},
+}
 
 
 def _patch_sleeper(monkeypatch):
@@ -12,6 +23,8 @@ def _patch_sleeper(monkeypatch):
     monkeypatch.setattr(sleeper, "rosters", lambda lid: ROSTERS)
     monkeypatch.setattr(sleeper, "matchups", lambda lid, week: MATCHUPS)
     monkeypatch.setattr(sleeper, "nfl_state", lambda: {"week": 3})
+    # keep enrichment offline in tests that don't care about it directly
+    monkeypatch.setattr(enrich, "gather", lambda *args, **kwargs: dict(_EMPTY_EXTRA))
 
 
 def test_init_writes_config(tmp_path, monkeypatch):
@@ -125,3 +138,30 @@ def test_season_requires_week(tmp_path, monkeypatch):
     cli.main(["init", "--league-id", "999", "--config", str(cfg)])
     with pytest.raises(SystemExit, match="--week"):
         cli.main(["recap", "--config", str(cfg), "--season", "2025"])
+
+
+def test_recap_degrades_gracefully_when_enrichment_fails(tmp_path, monkeypatch, capsys):
+    _patch_sleeper(monkeypatch)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(enrich, "gather", boom)
+    monkeypatch.setattr(llm, "generate", lambda p, m, prompt: "Subject: Wow\n\nBody here")
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    out = tmp_path / "email.md"
+    cli.main(["recap", "--config", str(cfg), "--week", "2", "--provider", "anthropic", "--out", str(out)])
+    captured = capsys.readouterr().out
+    assert "warning: enrichment unavailable" in captured
+    assert "boom" in captured
+    assert out.read_text() == "Subject: Wow\n\nBody here"
+
+
+def test_recap_includes_enrichment_when_gather_succeeds(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    out = tmp_path / "p.md"
+    cli.main(["recap", "--config", str(cfg), "--week", "2", "--provider", "manual", "--out", str(out)])
+    assert "Matchup details:" in out.read_text()
