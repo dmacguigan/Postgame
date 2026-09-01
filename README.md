@@ -31,7 +31,15 @@ You copy the draft into your own email client and send it yourself.
    via the Anthropic CLI login), the SDK may pick them up automatically;
    otherwise set ANTHROPIC_API_KEY.
 
-4. Scaffold your league config:
+4. Find your league ID:
+
+   Open your league on the Sleeper website (sleeper.com) and look at the
+   browser URL: `https://sleeper.com/leagues/YOUR_LEAGUE_ID/...`. The long
+   number after `/leagues/` is your league ID. On the mobile app, open the
+   league, tap the league name for settings, and copy the league link; the
+   ID is the same long number in that link.
+
+5. Scaffold your league config:
 
    ```bash
    python -m sleeper_recap init --league-id YOUR_LEAGUE_ID
