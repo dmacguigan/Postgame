@@ -22,6 +22,8 @@ def _guard(fn):
             return fn(*args, **kwargs)
         except SystemExit as e:
             return jsonify(error=str(e)), 400
+        except Exception as e:
+            return jsonify(error=f"unexpected error: {e}"), 500
 
     return wrapper
 
@@ -120,8 +122,13 @@ def create_app():
         d = request.json or {}
         key = d.get("league_key")
         cfg = _load(key)
-        out = os.path.join("recaps", key, f"{d.get('season')}_week_{d.get('week')}_prompt.md")
-        body, out = cli.run_recap(cfg, week=d.get("week"), season=d.get("season"), provider="manual", out=out)
+        try:
+            season = int(d["season"])
+            week = int(d["week"])
+        except (KeyError, TypeError, ValueError):
+            raise SystemExit("season and week must be numbers")
+        out = os.path.join("recaps", key, f"{season}_week_{week}_prompt.md")
+        body, out = cli.run_recap(cfg, week=week, season=season, provider="manual", out=out)
         return jsonify(body=body, out_path=os.path.abspath(out))
 
     return app

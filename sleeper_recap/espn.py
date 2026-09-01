@@ -120,7 +120,7 @@ class Client:
                         }
                     )
             return result
-        except Exception:
+        except KeyError:
             return []
 
     def nfl_state(self):

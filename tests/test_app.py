@@ -121,6 +121,13 @@ def test_generate_without_config_is_400(client):
     assert "Load" in r.get_json()["error"]
 
 
+def test_generate_rejects_non_numeric_season(client):
+    client.post("/api/init", json={"league_id": "999"})
+    r = client.post("/api/generate", json={"league_key": "999", "season": "../x", "week": 2})
+    assert r.status_code == 400
+    assert "numbers" in r.get_json()["error"]
+
+
 def test_save_keeps_emails_from_cli(client):
     cfg = client.post("/api/init", json={"league_id": "999"}).get_json()
     cfg["teams"]["1"]["email"] = "a@example.com"
