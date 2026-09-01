@@ -5,10 +5,13 @@ _session = requests.Session()
 
 
 def _get(path):
-    resp = _session.get(BASE + path, timeout=30)
-    if resp.status_code == 404:
-        raise SystemExit(f"Sleeper API: not found: {path}")
-    resp.raise_for_status()
+    try:
+        resp = _session.get(BASE + path, timeout=30)
+        if resp.status_code == 404:
+            raise SystemExit(f"Sleeper API: not found: {path}")
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        raise SystemExit(f"Sleeper API error: {e}")
     data = resp.json()
     if data is None:
         raise SystemExit(f"Sleeper API: not found: {path}")

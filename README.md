@@ -27,8 +27,9 @@ You copy the draft into your own email client and send it yourself.
    export ANTHROPIC_API_KEY=...   # or OPENAI_API_KEY / GEMINI_API_KEY
    ```
 
-   Claude users with the Claude CLI already logged in (`ant auth login`)
-   can skip this; the SDK picks up those credentials.
+   If your environment already supplies Anthropic credentials (for example
+   via the Anthropic CLI login), the SDK may pick them up automatically;
+   otherwise set ANTHROPIC_API_KEY.
 
 4. Scaffold your league config:
 
@@ -49,6 +50,12 @@ python -m sleeper_recap recap --provider openai --model gpt-5
 
 The draft prints to the terminal and is saved to `recaps/week_N.md`,
 followed by the recipient email list from your config.
+
+## Tests
+
+```bash
+python -m pytest
+```
 
 ## Notes
 

@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import tomllib
 
@@ -6,8 +7,7 @@ from sleeper_recap import llm, recap, sleeper
 
 
 def _toml_str(value):
-    escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
+    return json.dumps(str(value))
 
 
 def cmd_init(args):
@@ -39,7 +39,7 @@ def cmd_init(args):
             'fun_facts = ""',
             "",
         ]
-    with open(args.config, "w") as f:
+    with open(args.config, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print(f"Wrote {args.config}. Fill in owner_name, email, and fun_facts for each team.")
 
@@ -48,9 +48,11 @@ def cmd_recap(args):
     try:
         with open(args.config, "rb") as f:
             config = tomllib.load(f)
-    except FileNotFoundError:
+    except OSError:
         raise SystemExit(f"{args.config} not found; run: python -m sleeper_recap init --league-id YOUR_ID")
-    league_id = config["league_id"]
+    league_id = config.get("league_id")
+    if not league_id:
+        raise SystemExit("config missing league_id; re-run init")
 
     week = args.week or max(sleeper.nfl_state()["week"] - 1, 1)
     matchups = sleeper.matchups(league_id, week)
@@ -73,7 +75,7 @@ def cmd_recap(args):
     out_dir = os.path.dirname(out)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
-    with open(out, "w") as f:
+    with open(out, "w", encoding="utf-8") as f:
         f.write(body)
 
     print(body)
