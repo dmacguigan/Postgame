@@ -7,7 +7,7 @@ from sleeper_recap import llm, recap, sleeper
 
 
 def _toml_str(value):
-    return json.dumps(str(value))
+    return json.dumps(str(value), ensure_ascii=False)
 
 
 def cmd_init(args):

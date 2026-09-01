@@ -69,7 +69,5 @@ def generate(provider, model, prompt):
         raise SystemExit(f"unknown provider '{provider}'; choose from {sorted(_PROVIDERS)}")
     try:
         return fn(model, prompt)
-    except SystemExit:
-        raise
     except Exception as e:
         raise SystemExit(f"{provider} error: {type(e).__name__}: {e}")
