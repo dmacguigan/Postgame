@@ -42,7 +42,7 @@ def _pickups(sp, league_id, week):
                 continue
             for pid, rid in adds.items():
                 pickups.append((rid, pid))
-    return pickups
+    return list(dict.fromkeys(pickups))
 
 
 def _prev_matchups(sp, league_id, week):
