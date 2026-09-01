@@ -51,6 +51,13 @@ python -m sleeper_recap recap --provider openai --model gpt-5
 The draft prints to the terminal and is saved to `recaps/week_N.md`,
 followed by the recipient email list from your config.
 
+## No API key? Use manual mode
+
+If you have only a chat subscription (Claude Pro, ChatGPT Plus) and no API key,
+set `provider = "manual"` in config.toml or run
+`python -m sleeper_recap recap --provider manual`. The tool writes `recaps/week_N_prompt.md`;
+open it, paste its contents into your AI chat, and copy the reply into your email.
+
 ## Tests
 
 ```bash

@@ -23,7 +23,7 @@ def cmd_init(args):
         usernames[u["user_id"]] = u["display_name"]
     lines = [
         f"league_id = {_toml_str(args.league_id)}",
-        'provider = "anthropic"  # anthropic | openai | gemini',
+        'provider = "anthropic"  # anthropic | openai | gemini | manual',
         f'model = {_toml_str(llm.DEFAULT_MODELS["anthropic"])}',
         'tone = "funny, light trash talk, inside jokes welcome"',
         "",
@@ -68,10 +68,19 @@ def cmd_recap(args):
         config,
     )
     provider = args.provider or config.get("provider", "anthropic")
-    model = args.model or config.get("model") or llm.DEFAULT_MODELS.get(provider, "")
-    body = llm.generate(provider, model, prompt)
+    if provider == "manual":
+        header = (
+            "Copy everything below into your AI chat of choice "
+            "(claude.ai, ChatGPT, Gemini), then copy its reply into your email.\n\n---\n\n"
+        )
+        body = header + prompt
+        default_out = f"recaps/week_{week}_prompt.md"
+    else:
+        model = args.model or config.get("model") or llm.DEFAULT_MODELS.get(provider, "")
+        body = llm.generate(provider, model, prompt)
+        default_out = f"recaps/week_{week}.md"
 
-    out = args.out or f"recaps/week_{week}.md"
+    out = args.out or default_out
     out_dir = os.path.dirname(out)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
@@ -97,7 +106,7 @@ def main(argv=None):
 
     p_recap = sub.add_parser("recap", help="draft the weekly recap email")
     p_recap.add_argument("--week", type=int)
-    p_recap.add_argument("--provider", choices=["anthropic", "openai", "gemini"])
+    p_recap.add_argument("--provider", choices=["anthropic", "openai", "gemini", "manual"])
     p_recap.add_argument("--model")
     p_recap.add_argument("--config", default="config.toml")
     p_recap.add_argument("--out")

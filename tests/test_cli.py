@@ -81,3 +81,19 @@ def test_toml_str_roundtrips_emoji():
     name = "Team \U0001F600"
     parsed = tomllib.loads(f"x = {cli._toml_str(name)}")
     assert parsed["x"] == name
+
+
+def test_recap_manual_writes_prompt(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+
+    def boom(*args):
+        raise AssertionError("manual mode must not call llm.generate")
+
+    monkeypatch.setattr(llm, "generate", boom)
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    out = tmp_path / "p.md"
+    cli.main(["recap", "--config", str(cfg), "--week", "2", "--provider", "manual", "--out", str(out)])
+    text = out.read_text()
+    assert "Copy everything below" in text
+    assert "Alice Attack" in text
