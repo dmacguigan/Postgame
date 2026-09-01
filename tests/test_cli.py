@@ -1,5 +1,3 @@
-import tomllib
-
 import pytest
 
 from sleeper_recap import cli, enrich, llm, sleeper
@@ -88,12 +86,6 @@ def test_recap_no_scores_exits(tmp_path, monkeypatch):
 def test_recap_missing_config_exits():
     with pytest.raises(SystemExit, match="init"):
         cli.main(["recap", "--config", "/nonexistent/config.toml"])
-
-
-def test_toml_str_roundtrips_emoji():
-    name = "Team \U0001F600"
-    parsed = tomllib.loads(f"x = {cli._toml_str(name)}")
-    assert parsed["x"] == name
 
 
 def test_recap_manual_writes_prompt(tmp_path, monkeypatch):

@@ -1,55 +1,19 @@
 import argparse
-import json
 import os
-import tomllib
 
+from sleeper_recap import config as cfgmod
 from sleeper_recap import enrich, llm, recap, sleeper
-
-
-def _toml_str(value):
-    return json.dumps(str(value), ensure_ascii=False)
 
 
 def cmd_init(args):
     if os.path.exists(args.config) and not args.force:
         raise SystemExit(f"{args.config} exists; use --force to overwrite")
-    users = sleeper.users(args.league_id)
-    rosters = sleeper.rosters(args.league_id)
-    names = {}
-    usernames = {}
-    for u in users:
-        meta = u.get("metadata") or {}
-        names[u["user_id"]] = meta.get("team_name") or u["display_name"]
-        usernames[u["user_id"]] = u["display_name"]
-    lines = [
-        f"league_id = {_toml_str(args.league_id)}",
-        'provider = "manual"  # manual | anthropic | openai | gemini',
-        f'model = {_toml_str(llm.DEFAULT_MODELS["anthropic"])}',
-        'tone = "funny, light trash talk, inside jokes welcome"',
-        "",
-    ]
-    for r in sorted(rosters, key=lambda r: r["roster_id"]):
-        owner_id = r.get("owner_id")
-        lines += [
-            f"[teams.{r['roster_id']}]",
-            f"team_name = {_toml_str(names.get(owner_id, ''))}",
-            f"sleeper_username = {_toml_str(usernames.get(owner_id, ''))}",
-            'owner_name = ""',
-            'email = ""',
-            'fun_facts = ""',
-            "",
-        ]
-    with open(args.config, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
+    cfgmod.save(args.config, cfgmod.scaffold(args.league_id))
     print(f"Wrote {args.config}. Fill in owner_name, email, and fun_facts for each team.")
 
 
 def cmd_recap(args):
-    try:
-        with open(args.config, "rb") as f:
-            config = tomllib.load(f)
-    except OSError:
-        raise SystemExit(f"{args.config} not found; run: python -m sleeper_recap init --league-id YOUR_ID")
+    config = cfgmod.load(args.config)
     league_id = config.get("league_id")
     if not league_id:
         raise SystemExit("config missing league_id; re-run init")
