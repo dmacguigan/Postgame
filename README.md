@@ -1,11 +1,35 @@
-# Sleeper Weekly Recap
+# Postgame
 
 Drafts a fun weekly recap email for your Sleeper fantasy football league.
-By default, writes a ready-to-paste prompt file you share with Claude, ChatGPT, or Gemini;
-can instead call Claude, OpenAI, or Google Gemini APIs directly if configured.
-You copy the draft (or API response) into your own email client and send it yourself.
+Postgame writes a ready-to-paste prompt; you drop it into Claude, ChatGPT,
+or Gemini and paste the reply into your email client.
 
-## Setup
+## Download (no install)
+
+Grab the latest file for your computer from the
+[Releases page](https://github.com/dmacguigan/Postgame/releases):
+
+- Windows: `Postgame-windows.zip`. Unzip, double-click `Postgame.exe`.
+  If SmartScreen appears, click "More info" then "Run anyway".
+- macOS: `Postgame-macos.zip`. Unzip, then right-click `Postgame` and
+  choose Open (needed the first time; the app is not signed). A Terminal
+  window appears; that is the app. Close it to quit.
+- Linux: `Postgame-linux.tar.gz`. Extract, then `chmod +x Postgame` if
+  needed and run it.
+
+Your browser opens to the app. Enter your league ID, fill in owner names,
+emails, and fun facts, then generate a prompt for any week. Everything is
+saved in a `Postgame` folder in your home directory.
+
+Find your league ID: open your league at sleeper.com and copy the long
+number after `/leagues/` in the URL. On the mobile app, open league
+settings, copy the league link, and take the same number.
+
+## Developers
+
+Everything below is for running from source.
+
+### Setup
 
 1. Create the conda environment:
 
@@ -49,33 +73,44 @@ You copy the draft (or API response) into your own email client and send it your
    via the Anthropic CLI login), the SDK may pick them up automatically;
    otherwise set ANTHROPIC_API_KEY.
 
-## Usage
+### Usage
 
 ```bash
 python -m sleeper_recap recap                                  # most recent completed week
 python -m sleeper_recap recap --week 3                         # specific week
 python -m sleeper_recap recap --season 2025 --week 10          # past season (requires --week)
 python -m sleeper_recap recap --provider openai --model gpt-5
+python -m sleeper_recap app                                    # local web app in your browser
 ```
 
 The draft prints to the terminal and is saved to `recaps/week_N_prompt.md` (manual mode)
 or `recaps/week_N.md` (API mode), followed by the recipient email list from your config.
 
-## Manual mode (default)
+### Manual mode (default)
 
 By default, the tool runs in manual mode: it writes `recaps/week_N_prompt.md` with a ready-to-paste prompt.
 Open the file, copy its contents into Claude.ai, ChatGPT, or Gemini, then copy the reply into your email.
 No API key or environment setup needed. To use an API provider instead, set `provider` in config.toml
 or pass `--provider anthropic` (and run optional setup step 4 above).
 
-## Tests
+### Tests
 
 ```bash
 python -m pytest
 ```
 
-## Notes
+### Notes
 
 - API keys are read from environment variables only and are never written
   to any file.
 - Owner emails are never sent to the LLM; they are only printed locally.
+
+### Releasing
+
+Tag and push; GitHub Actions builds all three binaries and attaches them
+to a Release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
