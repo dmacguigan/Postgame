@@ -328,6 +328,8 @@ $("copy").onclick = async () => {
   setTimeout(() => $("copy").textContent = "Copy prompt", 1500);
 };
 
+setInterval(() => fetch("/api/ping", { method: "POST" }).catch(() => {}), 3000);
+fetch("/api/ping", { method: "POST" }).catch(() => {});
 boot();
 </script>
 </body>

@@ -185,3 +185,16 @@ def test_free_port_skips_busy_port():
         busy.listen(1)
         port = busy.getsockname()[1]
         assert appmod._free_port(port) == port + 1
+
+
+def test_ping_records_time(client):
+    appmod._last_ping["t"] = None
+    assert client.post("/api/ping").status_code == 200
+    assert appmod._last_ping["t"] is not None
+
+
+def test_should_quit_rules():
+    assert not appmod._should_quit(None, started=0, now=60)
+    assert appmod._should_quit(None, started=0, now=200)
+    assert not appmod._should_quit(100, started=0, now=105)
+    assert appmod._should_quit(100, started=0, now=120)

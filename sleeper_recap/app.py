@@ -1,6 +1,7 @@
 import functools
 import os
 import threading
+import time
 import webbrowser
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -14,6 +15,9 @@ from sleeper_recap import config as cfgmod
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 LEAGUES_DIR = "leagues"
 PORT = 8484
+HEARTBEAT_GRACE = 10
+FIRST_PAGE_GRACE = 120
+_last_ping = {"t": None}
 
 
 def _guard(fn):
@@ -56,6 +60,11 @@ def create_app():
     @app.get("/")
     def index():
         return send_from_directory(STATIC, "index.html")
+
+    @app.post("/api/ping")
+    def ping():
+        _last_ping["t"] = time.time()
+        return jsonify(ok=True)
 
     @app.get("/icon.svg")
     def icon():
@@ -147,6 +156,21 @@ def _free_port(start):
     raise SystemExit("no free port found; close other Postgame windows")
 
 
+def _should_quit(last_ping, started, now):
+    if last_ping is None:
+        return now - started > FIRST_PAGE_GRACE
+    return now - last_ping > HEARTBEAT_GRACE
+
+
+def _watchdog():
+    started = time.time()
+    while True:
+        time.sleep(2)
+        if _should_quit(_last_ping["t"], started, time.time()):
+            print("Browser tab closed; quitting.")
+            os._exit(0)
+
+
 def main(data_dir=None):
     if data_dir:
         os.makedirs(data_dir, exist_ok=True)
@@ -154,6 +178,7 @@ def main(data_dir=None):
     port = _free_port(PORT)
     url = f"http://127.0.0.1:{port}"
     threading.Timer(1.0, webbrowser.open, [url]).start()
+    threading.Thread(target=_watchdog, daemon=True).start()
     print(f"Postgame running at {url}")
     print("Close this window to quit.")
     create_app().run(host="127.0.0.1", port=port, debug=False, use_reloader=False)

@@ -16,7 +16,7 @@ Grab the file for your computer from the
 | OS | File | Steps |
 | --- | --- | --- |
 | Windows | `Postgame-windows.zip` | Unzip, double-click `Postgame.exe`. If SmartScreen appears, click **More info**, then **Run anyway**. |
-| macOS | `Postgame-macos.zip` | Unzip, right-click `Postgame`, choose **Open** (first time only; the app is unsigned). A Terminal window opens; that is the app. Close it to quit. |
+| macOS | `Postgame-macos.zip` | Unzip, right-click `Postgame`, choose **Open** (first time only; the app is unsigned). A Terminal window opens alongside; that is the app. |
 | Linux | `Postgame-linux.tar.gz` | Extract, `chmod +x Postgame` if needed, run it. |
 
 Your browser opens to the app automatically.
@@ -40,8 +40,9 @@ what is on screen.
 
 Everything lives in a `Postgame` folder in your home directory: `leagues/`
 holds one file per league, `recaps/` holds every prompt you generated.
-If port 8484 is busy, the app picks the next free one and prints the
-address in its window.
+Closing the browser tab quits the app a few seconds later. If port 8484
+is busy, the app picks the next free one and prints the address in its
+window.
 
 ### Finding your league ID
 
