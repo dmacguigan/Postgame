@@ -16,29 +16,13 @@ Grab the file for your computer from the
 | OS | File | Steps |
 | --- | --- | --- |
 | Windows | `Postgame-windows.zip` | Unzip, double-click `Postgame.exe`. If SmartScreen appears, click **More info**, then **Run anyway**. |
-| macOS | `Postgame-macos.zip` | Unzip, double-click `Postgame`. The first launch is blocked because the app is unsigned; see [First launch on macOS](#first-launch-on-macos) below. A Terminal window opens alongside; that is the app. |
 | Linux | `Postgame-linux.tar.gz` | Extract, `chmod +x Postgame` if needed, run it. |
 
 Your browser opens to the app automatically.
 
-### First launch on macOS
-
-macOS blocks unsigned downloads once. Do this one time:
-
-1. Double-click `Postgame`. A dialog says Apple could not verify it is
-   free of malware. Click **Done** (not Move to Trash).
-2. Open **System Settings**, then **Privacy & Security**, and scroll down
-   to the Security section. It says "Postgame was blocked". Click
-   **Open Anyway** and confirm with your password or Touch ID.
-3. Double-click `Postgame` again. It runs normally from now on.
-
-On macOS 14 or older, right-clicking `Postgame` and choosing **Open** does
-the same thing in one step. If you are comfortable in Terminal, this
-also clears the block:
-
-```bash
-xattr -d com.apple.quarantine ~/Downloads/Postgame
-```
+macOS is not supported yet: unsigned Mac apps are blocked by Gatekeeper,
+and signing needs an Apple developer account. Mac users can run from
+source (see Developers below).
 
 ## Using the app
 
@@ -160,8 +144,7 @@ python -m pytest
 
 ### Releasing
 
-Tag and push. GitHub Actions builds the Windows, macOS, and Linux
-binaries and attaches them to a GitHub Release:
+Tag and push. GitHub Actions builds the Windows and Linux binaries and attaches them to a GitHub Release:
 
 ```bash
 git tag v0.1.0

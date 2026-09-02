@@ -1,4 +1,4 @@
-"""Writes the Postgame speech bubble icon: icon.svg, Postgame.png, Postgame.ico, Postgame.icns.
+"""Writes the Postgame speech bubble icon: icon.svg, Postgame.png, Postgame.ico.
 Needs: pip install cairosvg pillow"""
 import io
 import os
@@ -29,5 +29,4 @@ if __name__ == "__main__":
     base = Image.open(io.BytesIO(png)).convert("RGBA")
     base.save(os.path.join(HERE, "Postgame.png"))
     base.save(os.path.join(HERE, "Postgame.ico"), sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    base.save(os.path.join(HERE, "Postgame.icns"))
-    print("wrote icon.svg, Postgame.png, Postgame.ico, Postgame.icns")
+    print("wrote icon.svg, Postgame.png, Postgame.ico")

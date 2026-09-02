@@ -15,8 +15,6 @@ jobs:
         include:
           - os: ubuntu-22.04
             asset: Postgame-linux.tar.gz
-          - os: macos-latest
-            asset: Postgame-macos.zip
           - os: windows-latest
             asset: Postgame-windows.zip
     runs-on: ${{ matrix.os }}
@@ -27,13 +25,10 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt pytest pyinstaller
       - run: python -m pytest -q
-      - run: pyinstaller --onefile --name Postgame --icon "icon/Postgame.${{ runner.os == 'Windows' && 'ico' || 'icns' }}" --add-data "sleeper_recap/static${{ runner.os == 'Windows' && ';' || ':' }}sleeper_recap/static" postgame.py
+      - run: pyinstaller --onefile --name Postgame --icon icon/Postgame.ico --add-data "sleeper_recap/static${{ runner.os == 'Windows' && ';' || ':' }}sleeper_recap/static" postgame.py
       - name: Archive (Linux)
         if: runner.os == 'Linux'
         run: tar -czf ${{ matrix.asset }} -C dist Postgame
-      - name: Archive (macOS)
-        if: runner.os == 'macOS'
-        run: cd dist && zip ../${{ matrix.asset }} Postgame
       - name: Archive (Windows)
         if: runner.os == 'Windows'
         run: Compress-Archive -Path dist/Postgame.exe -DestinationPath ${{ matrix.asset }}
