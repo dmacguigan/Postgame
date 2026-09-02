@@ -23,7 +23,7 @@ Your browser opens to the app automatically.
 
 ## Using the app
 
-1. **League.** Pick Sleeper or ESPN, paste your league ID, click **Load league**.
+1. **League.** Pick Sleeper or ESPN, paste your league ID, click **Import league**.
 2. **Teams.** Add owner names and fun facts for each team. Set the tone. Click **Save**.
 3. **Generate.** Pick a season and week, click **Generate prompt**, then **Copy prompt**.
 4. Paste the prompt into claude.ai, ChatGPT, or Gemini. Paste its reply into your email.
@@ -51,7 +51,7 @@ so the app can read your league as you:
 2. Open the browser's developer tools (F12), then **Application** (Chrome)
    or **Storage** (Firefox), then **Cookies**, then the espn.com entry.
 3. Copy the values of `espn_s2` and `SWID` into the two fields under the
-   league ID box before clicking **Load league**.
+   league ID box before clicking **Import league**.
 
 The cookies are saved in your league file on this computer only and are
 never shown in the app again.
