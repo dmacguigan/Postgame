@@ -6,6 +6,7 @@ import webbrowser
 from flask import Flask, jsonify, request, send_from_directory
 
 import re
+import socket
 
 from sleeper_recap import cli, platforms
 from sleeper_recap import config as cfgmod
@@ -138,12 +139,21 @@ def create_app():
     return app
 
 
+def _free_port(start):
+    for port in range(start, start + 20):
+        with socket.socket() as sock:
+            if sock.connect_ex(("127.0.0.1", port)) != 0:
+                return port
+    raise SystemExit("no free port found; close other Postgame windows")
+
+
 def main(data_dir=None):
     if data_dir:
         os.makedirs(data_dir, exist_ok=True)
         os.chdir(data_dir)
-    url = f"http://127.0.0.1:{PORT}"
+    port = _free_port(PORT)
+    url = f"http://127.0.0.1:{port}"
     threading.Timer(1.0, webbrowser.open, [url]).start()
     print(f"Postgame running at {url}")
     print("Close this window to quit.")
-    create_app().run(host="127.0.0.1", port=PORT, debug=False, use_reloader=False)
+    create_app().run(host="127.0.0.1", port=port, debug=False, use_reloader=False)

@@ -173,3 +173,13 @@ def test_espn_init_uses_key_and_hides_cookies(client, monkeypatch):
 
 def test_bad_league_key_rejected(client):
     assert client.get("/api/config?league_key=../x").status_code == 400
+
+
+def test_free_port_skips_busy_port():
+    import socket
+
+    with socket.socket() as busy:
+        busy.bind(("127.0.0.1", 0))
+        busy.listen(1)
+        port = busy.getsockname()[1]
+        assert appmod._free_port(port) == port + 1
