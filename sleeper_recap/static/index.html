@@ -105,6 +105,8 @@
     <label>Saved leagues</label>
     <select id="league_select"></select>
   </div>
+  <button id="add_toggle">Add a league</button>
+  <div id="add_wrap">
   <label>Add a league</label>
   <div class="row">
     <select id="platform" style="flex:0 0 8.5rem">
@@ -134,6 +136,7 @@
       <div><label>espn_s2</label><input id="espn_s2" placeholder="AEB...long string"></div>
       <div><label>SWID</label><input id="swid" placeholder="{1234ABCD-1234-1234-1234-1234ABCD5678}"></div>
     </div>
+  </div>
   </div>
 </section>
 
@@ -208,6 +211,11 @@ function renderTeams() {
   setStep(2);
 }
 
+function showAdd(on) {
+  $("add_wrap").style.display = on ? "" : "none";
+  $("add_toggle").style.display = on ? "none" : "";
+}
+
 function clearResult() {
   $("result").value = "";
   $("saved_path").textContent = "";
@@ -240,6 +248,7 @@ async function refreshLeagues() {
 
 async function openLeague(key) {
   clearResult();
+  showAdd(false);
   cfg = await api("/api/config?league_key=" + key);
   cfg.key = key;
   $("league_select").value = key;
@@ -250,9 +259,12 @@ async function openLeague(key) {
 async function boot() {
   try {
     const leagues = await refreshLeagues();
+    showAdd(!leagues.length);
     if (leagues.length) await openLeague(leagues[0].key);
   } catch (e) { showError(e.message); }
 }
+
+$("add_toggle").onclick = () => { showAdd(true); $("league_id").focus(); };
 
 $("platform").onchange = () => { $("espn_fields").style.display = $("platform").value === "espn" ? "" : "none"; };
 
@@ -275,6 +287,7 @@ $("load").onclick = async () => {
     $("league_id").value = "";
     $("espn_s2").value = "";
     $("swid").value = "";
+    showAdd(false);
     await refreshLeagues();
     renderTeams();
     await loadSeasons();
