@@ -208,6 +208,12 @@ function renderTeams() {
   setStep(2);
 }
 
+function clearResult() {
+  $("result").value = "";
+  $("saved_path").textContent = "";
+  setStep(2);
+}
+
 function setStep(n) {
   for (const i of [1, 2, 3]) $("step" + i).classList.toggle("on", i <= n);
 }
@@ -233,6 +239,7 @@ async function refreshLeagues() {
 }
 
 async function openLeague(key) {
+  clearResult();
   cfg = await api("/api/config?league_key=" + key);
   cfg.key = key;
   $("league_select").value = key;
@@ -261,6 +268,7 @@ $("load").onclick = async () => {
   const key = platform === "sleeper" ? id : `${platform}_${id}`;
   const saved = [...$("league_select").options].some(o => o.value === key);
   if (saved && !confirm("This league is already saved. Replace it? Owner names and fun facts will be cleared.")) return;
+  clearResult();
   try {
     cfg = await api("/api/init", { league_id: id, platform, force: saved,
       espn_s2: $("espn_s2").value.trim(), swid: $("swid").value.trim() });
@@ -272,6 +280,10 @@ $("load").onclick = async () => {
     await loadSeasons();
   } catch (e) { showError(e.message); }
 };
+
+$("teams").addEventListener("input", clearResult);
+$("season").onchange = clearResult;
+$("week").onchange = clearResult;
 
 $("save").onclick = async () => {
   showError("");
