@@ -2,7 +2,7 @@
 
 Weekly recap emails for your fantasy football league, drafted by AI, sent by you.
 
-Postgame pulls your league's scores, rosters, standings, and form from
+Postgame pulls your league's scores, rosters, standings, and recent results from
 **Sleeper** or **ESPN**, builds a ready-to-paste prompt, and hands it to you.
 Drop it into Claude, ChatGPT, or Gemini, then paste the reply into your
 email client. No accounts, no API keys, no data leaves your computer except
@@ -77,7 +77,7 @@ never shown in the app again.
 - Starters and bench for each matchup, including points left on the bench.
 - Full rosters with position, NFL team, draft slot, and season points.
 - Recent waiver pickups (Sleeper; ESPN only with cookies set).
-- Team form over the last three weeks and hot or cold players.
+- Each team's results over the last three weeks and hot or cold players.
 - Your owner names, fun facts, and tone.
 
 Owner emails are never part of the prompt.
@@ -155,7 +155,7 @@ git push origin v0.1.0
 | `sleeper_recap/sleeper.py` | Sleeper API client |
 | `sleeper_recap/espn.py` | ESPN adapter, same shapes as the Sleeper client |
 | `sleeper_recap/platforms.py` | Picks the client for a league config |
-| `sleeper_recap/enrich.py` | Rosters, pickups, form guide, hot/cold flags |
+| `sleeper_recap/enrich.py` | Rosters, pickups, recent results, hot/cold flags |
 | `sleeper_recap/recap.py` | Builds the prompt |
 | `sleeper_recap/config.py` | League config read/write |
 | `sleeper_recap/cli.py` | `init`, `recap`, `app` commands |

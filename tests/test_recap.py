@@ -110,6 +110,6 @@ def test_extra_marks_undrafted_player_waiver_fa():
 
 def test_extra_form_guide_line():
     p = recap.build_prompt(LEAGUE, USERS, ROSTERS, MATCHUPS, 2, CONFIG, extra=extra_fixture())
-    guide_idx = p.index("Form guide:")
+    guide_idx = p.index("Recent results:")
     section = p[guide_idx:]
     assert "Alice Attack: last 2 weeks WW (100.0, 110.0)" in section

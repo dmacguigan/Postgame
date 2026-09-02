@@ -131,7 +131,7 @@ def _enrichment_lines(info, rosters, matchups, results, extra):
         for pid in m.get("players") or []:
             pid_to_roster[pid] = m["roster_id"]
 
-    lines += ["", "Form guide:"]
+    lines += ["", "Recent results:"]
     for r in rosters:
         rid = r["roster_id"]
         streak = extra["team_streaks"].get(rid)
@@ -217,7 +217,7 @@ def build_prompt(league, users, rosters, matchups, week, config, extra=None):
     ]
     if extra is not None:
         lines.append(
-            "- Use the roster tables, bench numbers, pickups, and form guide for color and trash talk; "
+            "- Use the roster tables, bench numbers, pickups, and recent results for color and trash talk; "
             "do not reprint tables or list every stat."
         )
     return "\n".join(lines)
