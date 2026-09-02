@@ -2,7 +2,7 @@ import argparse
 import os
 
 from sleeper_recap import config as cfgmod
-from sleeper_recap import enrich, llm, platforms, recap
+from sleeper_recap import enrich, llm, multiweek, platforms, recap
 
 
 def cmd_init(args):
@@ -56,8 +56,33 @@ def run_recap(config, week=None, season=None, provider=None, model=None, out=Non
     return body, out
 
 
+def run_range(config, week_from, week_to, season=None, out=None):
+    sp = platforms.open(config, season)
+    body = multiweek.build_prompt(sp, week_from, week_to, config)
+    out = out or f"recaps/weeks_{week_from}-{week_to}_prompt.md"
+    out_dir = os.path.dirname(out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(body)
+    return body, out
+
+
+def _parse_weeks(text):
+    try:
+        a, b = (int(x) for x in text.split("-"))
+    except ValueError:
+        raise SystemExit("--weeks must look like 3-6")
+    return a, b
+
+
 def cmd_recap(args):
     config = cfgmod.load(args.config)
+    if args.weeks:
+        body, out = run_range(config, *_parse_weeks(args.weeks), season=args.season, out=args.out)
+        print(body)
+        print(f"Saved to {out}")
+        return
     body, out = run_recap(
         config, week=args.week, season=args.season, provider=args.provider, model=args.model, out=args.out
     )
@@ -84,6 +109,7 @@ def main(argv=None):
     p_recap = sub.add_parser("recap", help="draft the weekly recap email")
     p_recap.add_argument("--week", type=int)
     p_recap.add_argument("--season", type=int)
+    p_recap.add_argument("--weeks", help="multi-week recap, e.g. 3-6")
     p_recap.add_argument("--provider", choices=["anthropic", "openai", "gemini", "manual"])
     p_recap.add_argument("--model")
     p_recap.add_argument("--config", default="config.toml")

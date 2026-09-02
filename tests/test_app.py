@@ -26,6 +26,8 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(sleeper, "rosters", lambda lid: ROSTERS)
     monkeypatch.setattr(sleeper, "matchups", lambda lid, week: MATCHUPS)
     monkeypatch.setattr(sleeper, "nfl_state", lambda: {"week": 3})
+    monkeypatch.setattr(sleeper, "players", lambda: {})
+    monkeypatch.setattr(sleeper, "transactions", lambda lid, week: [])
     monkeypatch.setattr(enrich, "gather", lambda *a, **k: dict(_EMPTY_EXTRA))
     return appmod.create_app().test_client()
 
@@ -198,3 +200,12 @@ def test_should_quit_rules():
     assert appmod._should_quit(None, started=0, now=200)
     assert not appmod._should_quit(100, started=0, now=105)
     assert appmod._should_quit(100, started=0, now=120)
+
+
+def test_generate_week_range(client):
+    client.post("/api/init", json={"league_id": "999"})
+    r = client.post("/api/generate", json={"league_key": "999", "season": 2026, "week": 1, "week_to": 2})
+    assert r.status_code == 200
+    d = r.get_json()
+    assert "multi-week recap" in d["body"]
+    assert d["out_path"].endswith(os.path.join("recaps", "999", "2026_weeks_1-2_prompt.md"))

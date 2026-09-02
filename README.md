@@ -114,6 +114,7 @@ Draft a recap:
 python -m sleeper_recap recap                             # most recent completed week
 python -m sleeper_recap recap --week 3                    # specific week
 python -m sleeper_recap recap --season 2025 --week 10     # past season (requires --week)
+python -m sleeper_recap recap --weeks 3-6                # multi-week recap (season summary; add --season for past years)
 python -m sleeper_recap recap --provider openai --model gpt-5
 python -m sleeper_recap app                               # the web app, using the current folder
 ```

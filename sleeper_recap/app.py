@@ -141,8 +141,17 @@ def create_app():
             week = int(d["week"])
         except (KeyError, TypeError, ValueError):
             raise SystemExit("season and week must be numbers")
-        out = os.path.join("recaps", key, f"{season}_week_{week}_prompt.md")
-        body, out = cli.run_recap(cfg, week=week, season=season, provider="manual", out=out, header=False)
+        week_to = d.get("week_to")
+        if week_to:
+            try:
+                week_to = int(week_to)
+            except (TypeError, ValueError):
+                raise SystemExit("week_to must be a number")
+            out = os.path.join("recaps", key, f"{season}_weeks_{week}-{week_to}_prompt.md")
+            body, out = cli.run_range(cfg, week, week_to, season=season, out=out)
+        else:
+            out = os.path.join("recaps", key, f"{season}_week_{week}_prompt.md")
+            body, out = cli.run_recap(cfg, week=week, season=season, provider="manual", out=out, header=False)
         return jsonify(body=body, out_path=os.path.abspath(out))
 
     return app

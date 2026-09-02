@@ -155,7 +155,9 @@
   <h2>Generate</h2>
   <div class="row">
     <div><label>Season</label><select id="season"></select></div>
-    <div><label>Week</label><select id="week"></select></div>
+    <div><label>Mode</label><select id="mode"><option value="single">Single week</option><option value="range">Multi-week</option></select></div>
+    <div><label id="week_label">Week</label><select id="week"></select></div>
+    <div id="week_to_wrap" style="display:none"><label>To week</label><select id="week_to"></select></div>
     <button id="go" class="primary">Generate prompt</button>
   </div>
   <label>Prompt (paste into claude.ai, ChatGPT, or Gemini, then paste the reply into your email)</label>
@@ -229,7 +231,9 @@ function setStep(n) {
 async function loadSeasons() {
   const seasons = await api("/api/seasons?league_key=" + cfg.key);
   $("season").innerHTML = seasons.map(s => `<option value="${s.season}">${s.season}</option>`).join("");
-  $("week").innerHTML = Array.from({ length: 18 }, (_, i) => `<option value="${i + 1}">Week ${i + 1}</option>`).join("");
+  const weeks = Array.from({ length: 18 }, (_, i) => `<option value="${i + 1}">Week ${i + 1}</option>`).join("");
+  $("week").innerHTML = weeks;
+  $("week_to").innerHTML = weeks;
 }
 
 async function refreshLeagues() {
@@ -297,6 +301,13 @@ $("load").onclick = async () => {
 $("teams").addEventListener("input", clearResult);
 $("season").onchange = clearResult;
 $("week").onchange = clearResult;
+$("week_to").onchange = clearResult;
+$("mode").onchange = () => {
+  const range = $("mode").value === "range";
+  $("week_to_wrap").style.display = range ? "" : "none";
+  $("week_label").textContent = range ? "From week" : "Week";
+  clearResult();
+};
 
 $("save").onclick = async () => {
   showError("");
@@ -315,7 +326,9 @@ $("go").onclick = async () => {
   showError("");
   $("result").value = "Working...";
   try {
-    const d = await api("/api/generate", { league_key: cfg.key, season: Number($("season").value), week: Number($("week").value) });
+    const body = { league_key: cfg.key, season: Number($("season").value), week: Number($("week").value) };
+    if ($("mode").value === "range") body.week_to = Number($("week_to").value);
+    const d = await api("/api/generate", body);
     $("result").value = d.body;
     setStep(3);
     $("saved_path").textContent = "Saved to " + d.out_path;
