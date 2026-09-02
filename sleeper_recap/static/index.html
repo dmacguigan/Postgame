@@ -225,7 +225,7 @@ async function refreshLeagues() {
   for (const l of leagues) {
     const opt = document.createElement("option");
     opt.value = l.key;
-    opt.textContent = l.platform === "sleeper" ? l.name : `${l.name} (${l.platform.toUpperCase()})`;
+    opt.textContent = `${l.name} (${l.platform === "espn" ? "ESPN" : "Sleeper"})`;
     $("league_select").appendChild(opt);
   }
   if (cfg) $("league_select").value = cfg.key;
