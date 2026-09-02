@@ -83,6 +83,7 @@ def test_save_config(client):
     cfg["tone"] = "dry"
     r = client.post("/api/config", json=cfg)
     assert r.status_code == 200
+    assert r.get_json()["key"] == "999"
     assert client.get("/api/config?league_key=999").get_json()["teams"]["1"]["email"] == "a@example.com"
 
 

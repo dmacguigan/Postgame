@@ -278,7 +278,9 @@ $("save").onclick = async () => {
   cfg.tone = $("tone").value;
   for (const el of $("team_list").querySelectorAll("input")) cfg.teams[el.dataset.rid][el.dataset.key] = el.value;
   try {
+    const key = cfg.key;
     cfg = await api("/api/config", cfg);
+    cfg.key = key;
     $("saved").textContent = "Saved";
     setTimeout(() => $("saved").textContent = "", 2000);
   } catch (e) { showError(e.message); }

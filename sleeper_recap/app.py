@@ -113,7 +113,7 @@ def create_app():
         cfgmod.save(_path(key), cfg)
         cfg.pop("espn_s2", None)
         cfg.pop("swid", None)
-        return jsonify(cfg)
+        return jsonify(dict(cfg, key=key))
 
     @app.get("/api/seasons")
     @_guard
