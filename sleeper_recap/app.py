@@ -56,6 +56,10 @@ def create_app():
     def index():
         return send_from_directory(STATIC, "index.html")
 
+    @app.get("/icon.svg")
+    def icon():
+        return send_from_directory(STATIC, "icon.svg")
+
     @app.get("/api/leagues")
     def leagues():
         out = []

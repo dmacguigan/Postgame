@@ -27,7 +27,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt pytest pyinstaller
       - run: python -m pytest -q
-      - run: pyinstaller --onefile --name Postgame --add-data "sleeper_recap/static${{ runner.os == 'Windows' && ';' || ':' }}sleeper_recap/static" postgame.py
+      - run: pyinstaller --onefile --name Postgame --icon "icon/Postgame.${{ runner.os == 'Windows' && 'ico' || 'icns' }}" --add-data "sleeper_recap/static${{ runner.os == 'Windows' && ';' || ':' }}sleeper_recap/static" postgame.py
       - name: Archive (Linux)
         if: runner.os == 'Linux'
         run: tar -czf ${{ matrix.asset }} -C dist Postgame

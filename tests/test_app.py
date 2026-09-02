@@ -40,6 +40,12 @@ def test_leagues_empty_before_init(client):
     assert client.get("/api/leagues").get_json() == []
 
 
+def test_icon_served(client):
+    r = client.get("/icon.svg")
+    assert r.status_code == 200
+    assert b"<svg" in r.data
+
+
 def test_config_400_before_init(client):
     r = client.get("/api/config?league_key=999")
     assert r.status_code == 400
