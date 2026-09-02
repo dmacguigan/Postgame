@@ -107,7 +107,8 @@ def test_generate_manual(client):
     r = client.post("/api/generate", json={"league_key": "999", "season": 2026, "week": 2})
     assert r.status_code == 200
     d = r.get_json()
-    assert "Copy everything below" in d["body"]
+    assert "Copy everything below" not in d["body"]
+    assert d["body"].startswith("You are writing a weekly recap")
     assert d["out_path"].endswith(os.path.join("recaps", "999", "2026_week_2_prompt.md"))
     assert "recipients" not in d
     assert not re.search(r"[\w.]+@[\w.]+", d["body"])

@@ -12,7 +12,7 @@ def cmd_init(args):
     print(f"Wrote {args.config}. Fill in owner_name, email, and fun_facts for each team.")
 
 
-def run_recap(config, week=None, season=None, provider=None, model=None, out=None):
+def run_recap(config, week=None, season=None, provider=None, model=None, out=None, header=True):
     if season and not week:
         raise SystemExit("--season requires --week (past seasons have no current week)")
     sp = platforms.open(config, season)
@@ -36,11 +36,11 @@ def run_recap(config, week=None, season=None, provider=None, model=None, out=Non
     prompt = recap.build_prompt(league_obj, users_list, rosters_list, matchups, week, config, extra=extra)
     provider = provider or config.get("provider", "manual")
     if provider == "manual":
-        header = (
+        note = (
             "Copy everything below into your AI chat of choice "
             "(claude.ai, ChatGPT, Gemini), then copy its reply into your email.\n\n---\n\n"
         )
-        body = header + prompt
+        body = (note + prompt) if header else prompt
         default_out = f"recaps/week_{week}_prompt.md"
     else:
         model = model or config.get("model") or llm.DEFAULT_MODELS.get(provider, "")

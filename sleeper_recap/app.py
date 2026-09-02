@@ -133,7 +133,7 @@ def create_app():
         except (KeyError, TypeError, ValueError):
             raise SystemExit("season and week must be numbers")
         out = os.path.join("recaps", key, f"{season}_week_{week}_prompt.md")
-        body, out = cli.run_recap(cfg, week=week, season=season, provider="manual", out=out)
+        body, out = cli.run_recap(cfg, week=week, season=season, provider="manual", out=out, header=False)
         return jsonify(body=body, out_path=os.path.abspath(out))
 
     return app
