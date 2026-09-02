@@ -148,4 +148,4 @@ git push origin v0.1.0
 | `sleeper_recap/cli.py` | `init`, `recap`, `app` commands |
 | `sleeper_recap/app.py` | Flask app behind the packaged binary |
 | `postgame.py` | Packaged app entry point |
-| `icon/make_icon.py` | Regenerates the PG icon files (needs `pip install pillow`) |
+| `icon/make_icon.py` | Regenerates the PG icon files (needs `pip install cairosvg pillow`) |
