@@ -23,14 +23,25 @@ Your browser opens to the app automatically.
 
 ## Using the app
 
-1. **League.** Pick Sleeper or ESPN, paste your league ID, click **Import league**.
-2. **Teams.** Add owner names and fun facts for each team. Set the tone. Click **Save**.
-3. **Generate.** Pick a season and week, click **Generate prompt**, then **Copy prompt**.
-4. Paste the prompt into claude.ai, ChatGPT, or Gemini. Paste its reply into your email.
+1. **League.** Click **Add a league**, pick Sleeper or ESPN, paste your
+   league ID, click **Import league**. Next time, saved leagues appear in
+   the dropdown labeled with their platform; pick one to switch.
+2. **Teams.** Add owner names and fun facts for each team. Set the tone.
+   Click **Save teams**.
+3. **Generate.** Pick a season and week, click **Generate prompt**, then
+   **Copy prompt**.
+4. Paste the prompt into claude.ai, ChatGPT, or Gemini. Paste its reply
+   into your email.
 
-Saved leagues show up in a dropdown next time. Everything lives in a
-`Postgame` folder in your home directory: `leagues/` holds your league
-files, `recaps/` holds every prompt you generated.
+Importing a league that is already saved asks before replacing its owner
+names and fun facts. The prompt box clears whenever you switch leagues,
+edit teams, or change the season or week, so what you copy always matches
+what is on screen.
+
+Everything lives in a `Postgame` folder in your home directory: `leagues/`
+holds one file per league, `recaps/` holds every prompt you generated.
+If port 8484 is busy, the app picks the next free one and prints the
+address in its window.
 
 ### Finding your league ID
 
@@ -50,8 +61,10 @@ so the app can read your league as you:
 1. Log in at espn.com in your browser.
 2. Open the browser's developer tools (F12), then **Application** (Chrome)
    or **Storage** (Firefox), then **Cookies**, then the espn.com entry.
-3. Copy the values of `espn_s2` and `SWID` into the two fields under the
-   league ID box before clicking **Import league**.
+3. Copy the values of `espn_s2` and `SWID` (keep the curly braces on
+   SWID) into the two fields under the league ID box before clicking
+   **Import league**. The app has the same steps under "How to get
+   espn_s2 and SWID".
 
 The cookies are saved in your league file on this computer only and are
 never shown in the app again.
