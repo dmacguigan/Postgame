@@ -1,3 +1,5 @@
+<p align="center"><img src="icon/Postgame.png" alt="Postgame logo" width="160"></p>
+
 # Postgame
 
 Weekly recap emails for your fantasy football league, drafted by AI, sent by you.
