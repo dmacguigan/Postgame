@@ -64,7 +64,7 @@
   .team div:last-child { grid-column: 1 / -1; }
   .team label { margin-top: 0.4rem; }
 
-  #error { display: none; background: #3a1216; border: 1px solid var(--red); color: #ffd7d9; padding: 0.6rem 0.8rem; border-radius: 4px; margin: 0 0 1rem; }
+  #error, #gen_error { display: none; background: #3a1216; border: 1px solid var(--red); color: #ffd7d9; padding: 0.6rem 0.8rem; border-radius: 4px; margin: 0 0 1rem; }
   .muted { color: var(--muted); font-size: 0.9rem; }
   .status { display: inline-block; margin-left: 0.75rem; color: var(--green); font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em; }
   details { margin-top: 0.5rem; }
@@ -160,6 +160,7 @@
     <div id="week_to_wrap" style="display:none"><label>To week</label><select id="week_to"></select></div>
     <button id="go" class="primary">Generate prompt</button>
   </div>
+  <div id="gen_error"></div>
   <label>Prompt (paste into claude.ai, ChatGPT, or Gemini, then paste the reply into your email)</label>
   <textarea id="result" readonly placeholder="Your prompt appears here."></textarea>
   <div class="actions">
@@ -173,7 +174,7 @@
 const $ = id => document.getElementById(id);
 let cfg = null;
 
-function showError(msg) { $("error").textContent = msg; $("error").style.display = msg ? "block" : "none"; }
+function showError(msg, id = "error") { $(id).textContent = msg; $(id).style.display = msg ? "block" : "none"; }
 
 async function api(path, body) {
   const opts = body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {};
@@ -221,6 +222,7 @@ function showAdd(on) {
 function clearResult() {
   $("result").value = "";
   $("saved_path").textContent = "";
+  showError("", "gen_error");
   setStep(2);
 }
 
@@ -324,6 +326,7 @@ $("save").onclick = async () => {
 
 $("go").onclick = async () => {
   showError("");
+  showError("", "gen_error");
   $("result").value = "Working...";
   try {
     const body = { league_key: cfg.key, season: Number($("season").value), week: Number($("week").value) };
@@ -332,7 +335,7 @@ $("go").onclick = async () => {
     $("result").value = d.body;
     setStep(3);
     $("saved_path").textContent = "Saved to " + d.out_path;
-  } catch (e) { $("result").value = ""; showError(e.message); }
+  } catch (e) { $("result").value = ""; showError(e.message, "gen_error"); }
 };
 
 $("copy").onclick = async () => {
