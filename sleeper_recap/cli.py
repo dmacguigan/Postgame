@@ -12,6 +12,16 @@ def cmd_init(args):
     print(f"Wrote {args.config}. Fill in owner_name, email, and fun_facts for each team.")
 
 
+def _check_finished(sp, weeks):
+    state = sp.nfl_state()
+    season = sp.league_obj.get("season")
+    if str(state.get("season", season)) != str(season):
+        return
+    unfinished = [w for w in weeks if w >= state["week"]]
+    if unfinished:
+        raise SystemExit(f"week {unfinished[0]} has not finished yet; wait until all games are done")
+
+
 def run_recap(config, week=None, season=None, provider=None, model=None, out=None, header=True):
     if season and not week:
         raise SystemExit("--season requires --week (past seasons have no current week)")
@@ -20,6 +30,7 @@ def run_recap(config, week=None, season=None, provider=None, model=None, out=Non
     league_obj = sp.league_obj
 
     week = week or max(sp.nfl_state()["week"] - 1, 1)
+    _check_finished(sp, [week])
     matchups = sp.matchups(league_id, week)
     if not matchups or all((m.get("points") or 0) == 0 for m in matchups):
         raise SystemExit(f"no scores yet for week {week}; pick another week with --week")
@@ -58,6 +69,7 @@ def run_recap(config, week=None, season=None, provider=None, model=None, out=Non
 
 def run_range(config, week_from, week_to, season=None, out=None):
     sp = platforms.open(config, season)
+    _check_finished(sp, range(week_from, week_to + 1))
     body = multiweek.build_prompt(sp, week_from, week_to, config)
     out = out or f"recaps/weeks_{week_from}-{week_to}_prompt.md"
     out_dir = os.path.dirname(out)

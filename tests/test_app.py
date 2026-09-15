@@ -25,7 +25,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(sleeper, "users", lambda lid: USERS)
     monkeypatch.setattr(sleeper, "rosters", lambda lid: ROSTERS)
     monkeypatch.setattr(sleeper, "matchups", lambda lid, week: MATCHUPS)
-    monkeypatch.setattr(sleeper, "nfl_state", lambda: {"week": 3})
+    monkeypatch.setattr(sleeper, "nfl_state", lambda: {"week": 3, "season": "2026"})
     monkeypatch.setattr(sleeper, "players", lambda: {})
     monkeypatch.setattr(sleeper, "transactions", lambda lid, week: [])
     monkeypatch.setattr(enrich, "gather", lambda *a, **k: dict(_EMPTY_EXTRA))

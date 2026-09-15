@@ -20,7 +20,7 @@ def _patch_sleeper(monkeypatch):
     monkeypatch.setattr(sleeper, "users", lambda lid: USERS)
     monkeypatch.setattr(sleeper, "rosters", lambda lid: ROSTERS)
     monkeypatch.setattr(sleeper, "matchups", lambda lid, week: MATCHUPS)
-    monkeypatch.setattr(sleeper, "nfl_state", lambda: {"week": 3})
+    monkeypatch.setattr(sleeper, "nfl_state", lambda: {"week": 3, "season": "2026"})
     # keep enrichment offline in tests that don't care about it directly
     monkeypatch.setattr(enrich, "gather", lambda *args, **kwargs: dict(_EMPTY_EXTRA))
 
@@ -167,3 +167,28 @@ def test_run_recap_returns_body_and_path(tmp_path, monkeypatch):
     assert "Copy everything below" in body
     assert out == "recaps/week_2_prompt.md"
     assert (tmp_path / out).read_text(encoding="utf-8") == body
+
+
+def test_recap_refuses_unfinished_week(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    with pytest.raises(SystemExit, match="not finished"):
+        cli.main(["recap", "--config", str(cfg), "--week", "3", "--out", str(tmp_path / "p.md")])
+
+
+def test_range_refuses_unfinished_week(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    with pytest.raises(SystemExit, match="week 3 has not finished"):
+        cli.main(["recap", "--config", str(cfg), "--weeks", "1-3", "--out", str(tmp_path / "p.md")])
+
+
+def test_past_season_skips_finished_check(tmp_path, monkeypatch):
+    _patch_sleeper(monkeypatch)
+    monkeypatch.setattr(sleeper, "league", lambda lid: dict(LEAGUE, season="2025", league_id="999"))
+    cfg = tmp_path / "config.toml"
+    cli.main(["init", "--league-id", "999", "--config", str(cfg)])
+    cli.main(["recap", "--config", str(cfg), "--season", "2025", "--week", "5", "--out", str(tmp_path / "p.md")])
+    assert (tmp_path / "p.md").exists()
