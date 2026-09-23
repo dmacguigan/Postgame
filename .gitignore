@@ -7,3 +7,4 @@ recaps/
 build/
 dist/
 *.spec
+.serena

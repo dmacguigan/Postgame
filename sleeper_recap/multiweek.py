@@ -136,7 +136,7 @@ def build_prompt(sp, week_from, week_to, config):
 
     facts = [f"- {t['name']} ({t['owner']}): {t['facts']}" for t in info.values() if t["facts"]]
     if facts:
-        lines += ["", "Fun facts about the owners (weave these in where funny):"] + facts
+        lines += ["", "Fun facts about the owners. Weave these into message occasionally, only a few per message:"] + facts
 
     lines += [
         "",

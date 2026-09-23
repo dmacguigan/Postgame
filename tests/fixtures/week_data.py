@@ -52,7 +52,7 @@ MATCHUPS = [
 CONFIG = {
     "league_id": "999",
     "provider": "anthropic",
-    "tone": "funny, light trash talk",
+    "tone": "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about NFL players or NFL teams mentioned in recap, then work some facts into the message",
     "teams": {
         "1": {"team_name": "Alice Attack", "owner_name": "Alice", "email": "alice@example.com", "fun_facts": "afraid of kickers"},
         "2": {"team_name": "Bob Bombers", "owner_name": "Bob", "email": "bob@example.com", "fun_facts": "drafts by jersey color"},

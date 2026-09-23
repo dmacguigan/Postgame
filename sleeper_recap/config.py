@@ -44,7 +44,7 @@ def scaffold(league_id, platform="sleeper", espn_s2="", swid=""):
         "platform": platform,
         "provider": "manual",
         "model": llm.DEFAULT_MODELS["anthropic"],
-        "tone": "funny, light trash talk, inside jokes welcome",
+        "tone": "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about NFL players or NFL teams mentioned in recap, then work some facts into the message",
         "teams": teams,
     }
     if platform == "espn":

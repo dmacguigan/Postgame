@@ -1,7 +1,7 @@
 league_id = "1312070289483378688"
 provider = "manual"  # manual | anthropic | openai | gemini
 model = "claude-opus-5"
-tone = "funny, light trash talk, inside jokes welcome"
+tone = "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about players or teams mentioned in recap, then work that into the message"
 
 # One block per team, keyed by Sleeper roster_id.
 # Run `python -m sleeper_recap init --league-id YOUR_ID` to prefill these.

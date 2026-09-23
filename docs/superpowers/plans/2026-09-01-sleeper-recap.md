@@ -216,7 +216,7 @@ MATCHUPS = [
 CONFIG = {
     "league_id": "999",
     "provider": "anthropic",
-    "tone": "funny, light trash talk",
+    "tone": "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about NFL players or NFL teams mentioned in recap, then work some facts into the message",
     "teams": {
         "1": {"team_name": "Alice Attack", "owner_name": "Alice", "email": "alice@example.com", "fun_facts": "afraid of kickers"},
         "2": {"team_name": "Bob Bombers", "owner_name": "Bob", "email": "bob@example.com", "fun_facts": "drafts by jersey color"},
@@ -347,7 +347,7 @@ def build_prompt(league, users, rosters, matchups, week, config):
 
     facts = [f"- {t['name']} ({t['owner']}): {t['facts']}" for t in info.values() if t["facts"]]
     if facts:
-        lines += ["", "Fun facts about the owners (weave these in where funny):"] + facts
+        lines += ["", "Fun facts about the owners. Weave these into message occasionally, only a few per message:"] + facts
 
     lines += [
         "",
@@ -687,7 +687,7 @@ def cmd_init(args):
         f"league_id = {_toml_str(args.league_id)}",
         'provider = "anthropic"  # anthropic | openai | gemini',
         f'model = {_toml_str(llm.DEFAULT_MODELS["anthropic"])}',
-        'tone = "funny, light trash talk, inside jokes welcome"',
+        'tone = "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about NFL players or NFL teams mentioned in recap, then work some facts into the message"',
         "",
     ]
     for r in sorted(rosters, key=lambda r: r["roster_id"]):
@@ -779,7 +779,7 @@ main()
 league_id = "1312070289483378688"
 provider = "anthropic"  # anthropic | openai | gemini
 model = "claude-opus-5"
-tone = "funny, light trash talk, inside jokes welcome"
+tone = "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about NFL players or NFL teams mentioned in recap, then work some facts into the message"
 
 # One block per team, keyed by Sleeper roster_id.
 # Run `python -m sleeper_recap init --league-id YOUR_ID` to prefill these.

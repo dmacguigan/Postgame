@@ -67,7 +67,7 @@ tests/
 league_id = "1312070289483378688"
 provider = "anthropic"            # anthropic | openai | gemini
 model = "claude-opus-5"           # provider-specific model id
-tone = "funny, light trash talk, inside jokes welcome"  # optional style notes
+tone = "Funny, light trash talk, inside jokes welcome. After initial draft, search web for relevant stats about NFL players or NFL teams mentioned in recap, then work some facts into the message"  # optional style notes
 
 [teams.1]                          # keyed by Sleeper roster_id
 team_name = "Team Name"            # prefilled by init from Sleeper
