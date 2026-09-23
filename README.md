@@ -35,7 +35,7 @@ source (see Developers below).
    Click **Save teams**.
 3. **Generate.** Pick a season and week, click **Generate prompt**, then
    **Copy prompt**.
-4. Paste the prompt into claude.ai, ChatGPT, or Gemini. Paste its reply
+4. Paste the prompt into Claude, ChatGPT, Gemini, or your favorite LLM. Paste its reply
    into your email.
 
 Importing a league that is already saved asks before replacing its owner
