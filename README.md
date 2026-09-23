@@ -139,21 +139,6 @@ export ANTHROPIC_API_KEY=...   # or OPENAI_API_KEY / GEMINI_API_KEY
 Keys are read from environment variables only and never written to disk.
 The packaged app is manual mode only.
 
-### Tests
-
-```bash
-python -m pytest
-```
-
-### Releasing
-
-Tag and push. GitHub Actions builds the Windows and Linux binaries and attaches them to a GitHub Release:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
 ### Layout
 
 | Path | Purpose |
